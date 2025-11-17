@@ -173,7 +173,7 @@
     .btn {
       border: none;
       border-radius: 999px;
-      padding: 9px 16px;
+      padding: 7px 14px;
       font-size: 13px;
       cursor: pointer;
       display: inline-flex;
@@ -205,6 +205,17 @@
       background: rgba(15,23,42,0.9);
       color: #e5e7eb;
       border: 1px solid rgba(75,85,99,0.9);
+    }
+
+    .btn-danger {
+      background: #dc2626;
+      color: #fee2e2;
+    }
+
+    .btn-sm {
+      padding: 4px 8px;
+      font-size: 11px;
+      border-radius: 999px;
     }
 
     .btn:active {
@@ -338,9 +349,147 @@
         align-items: flex-start;
       }
     }
+
+    /* ===== ESTILOS DEL PANEL REAL (TU SISTEMA) ===== */
+
+    #panel-clientes {
+      display: none;
+      width: 100%;
+      min-height: 100vh;
+      background: #0f172a;
+      color: #e5e7eb;
+      font-family: Arial, sans-serif;
+    }
+
+    #panel-clientes header {
+      background: #111827;
+      padding: 12px 16px;
+      text-align: center;
+      border-bottom: 1px solid #1f2937;
+    }
+
+    #panel-clientes header h1 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    #panel-clientes header small {
+      display: block;
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
+    #panel-clientes main {
+      padding: 12px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    .card h2 {
+      margin-top: 0;
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      margin-top: 6px;
+      margin-bottom: 2px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 6px 8px;
+      font-size: 13px;
+      border-radius: 6px;
+      border: 1px solid #4b5563;
+      background: #020617;
+      color: #e5e7eb;
+      box-sizing: border-box;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #22c55e;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 40px;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .col-2 {
+      flex: 1 1 50%;
+    }
+
+    .col-3 {
+      flex: 1 1 33%;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    th, td {
+      border-bottom: 1px solid #1f2937;
+      padding: 6px 4px;
+      text-align: left;
+    }
+
+    th {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: #9ca3af;
+      white-space: nowrap;
+    }
+
+    .small {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
+    .scroll-x {
+      overflow-x: auto;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .badge-ok { background: #064e3b; color: #a7f3d0; }
+    .badge-pendiente { background: #7f1d1d; color: #fecaca; }
+    .badge-gracia { background: #78350f; color: #fed7aa; }
+
+    @media (max-width: 600px) {
+      .hide-mobile { display: none; }
+    }
   </style>
 </head>
 <body>
+  <!-- SHELL BONITO -->
   <div class="app-shell">
     <header class="app-header">
       <div class="brand">
@@ -392,52 +541,611 @@
       <aside class="panel">
         <div class="panel-header">
           <span class="panel-header-title">estado de la app</span>
-          <span class="panel-chip">Versión 1.0 • Solo diseño</span>
+          <span class="panel-chip">Versión 1.0 • Activa</span>
         </div>
         <div class="panel-body">
           <p>
-            Ya tienes lista la base de la app. Lo siguiente es
-            <b>pegar tu sistema completo de mensualidades</b> dentro del panel para que funcione todo:
+            Ya tienes lista la base de la app con tu panel de clientes integrado.
+            Puedes usarla como app instalada y todo se guarda en este dispositivo.
           </p>
 
           <div class="steps">
             <div class="step">
               <div class="step-badge">1</div>
               <div class="step-text">
-                <b>Probamos este diseño en tu cel.</b> Revisa que se vea bien como app instalada.
+                <b>Abre el panel de clientes</b> para registrar usuarios de tu internet.
               </div>
             </div>
             <div class="step">
               <div class="step-badge">2</div>
               <div class="step-text">
-                <b>Luego pegamos tu código de clientes y pagos</b> dentro del botón “Abrir panel de clientes”.
+                <b>Marca pagos, atrasos y cortes</b> con un tap desde tu cel.
               </div>
             </div>
             <div class="step">
               <div class="step-badge">3</div>
               <div class="step-text">
-                Opcional: añadimos exportar a Excel, backups y sincronización con VPS.
+                Usa el historial anual para ver quién ha pagado mes a mes.
               </div>
             </div>
           </div>
 
           <div class="status-pill">
             <span class="dot"></span>
-            Próximo paso: integrar tu sistema real de mensualidades.
+            Próximo nivel: exportar respaldos y sincronizar con tu VPS.
           </div>
         </div>
       </aside>
     </main>
   </div>
 
+  <!-- PANEL REAL DE TU SISTEMA -->
+  <div id="panel-clientes">
+    <header>
+      <h1>Sistema de Mensualidades Internet</h1>
+      <small>SIN WIFI 🔥 NO HAY PARAÍSO 🔥</small>
+    </header>
+
+    <main>
+      <!-- FORMULARIO -->
+      <div class="card">
+        <h2 id="form-title">Registrar cliente</h2>
+
+        <form id="cliente-form">
+          <input type="hidden" id="cliente-id">
+
+          <div class="row">
+            <div class="col-2">
+              <label>Nombre</label>
+              <input id="nombre" required>
+            </div>
+
+            <div class="col-2">
+              <label>Teléfono</label>
+              <input id="telefono">
+            </div>
+          </div>
+
+          <label>Dirección</label>
+          <input id="direccion">
+
+          <div class="row">
+            <div class="col-3">
+              <label>Plan</label>
+              <input id="plan">
+            </div>
+
+            <div class="col-3">
+              <label>Monto</label>
+              <input id="monto" type="number">
+            </div>
+
+            <div class="col-3">
+              <label>Día pago</label>
+              <input id="dia-pago" type="number" min="1" max="31" placeholder="1 - 31" />
+            </div>
+          </div>
+
+          <label>Días de gracia</label>
+          <input id="corte-dias" type="number">
+
+          <label>Notas</label>
+          <textarea id="notas"></textarea>
+
+          <button class="btn btn-primary" type="submit">Guardar</button>
+        </form>
+      </div>
+
+      <!-- TABLA -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h2>Clientes registrados</h2>
+          <input id="buscador" placeholder="Buscar...">
+        </div>
+
+        <div class="scroll-x">
+          <table>
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Plan</th>
+                <th class="hide-mobile">Monto</th>
+                <th class="hide-mobile">Dirección</th>
+                <th>Día pago</th>
+                <th>Corte</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+
+            <tbody id="tabla-clientes"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- REPORTE -->
+      <div class="card">
+        <h2>Historial anual</h2>
+        <select id="reporte-anio" style="margin-bottom:6px;"></select>
+
+        <div class="scroll-x">
+          <table>
+            <thead><tr id="reporte-header"></tr></thead>
+            <tbody id="reporte-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- MODAL MULTIANUAL -->
+    <div id="modal-meses" 
+        style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(3px);z-index:9999;justify-content:center;align-items:center;">
+      <div style="background:#111827;padding:20px;border-radius:12px;width:90%;max-width:420px;">
+        <h2 style="margin-top:0;font-size:18px;text-align:center;">
+          Editar meses — <span id="modal-nombre"></span>
+        </h2>
+
+        <div style="text-align:center;margin-bottom:10px;">
+          <label style="font-size:12px;color:#9ca3af;">Año:</label>
+          <select id="modal-anio"
+                  onchange="abrirModalMeses(clienteEditandoMeses)"
+                  style="background:#0f172a;color:#e5e7eb;border-radius:6px;border:1px solid #4b5563;padding:4px 8px;">
+          </select>
+        </div>
+
+        <p style="font-size:12px;color:#9ca3af;text-align:center;margin-top:-4px;">
+          Toca para marcar ✔ pagado o ✖ pendiente
+        </p>
+
+        <div id="lista-meses"></div>
+
+        <div style="text-align:right;margin-top:12px;">
+          <button type="button" onclick="cerrarModalMeses()" class="btn btn-secondary">
+            Cerrar
+          </button>
+          <button type="button" onclick="guardarCambiosHistorial()" class="btn btn-primary">
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // De momento solo mostramos un aviso.
-    // Después aquí montaremos tu sistema real dentro del shell.
+    // Botón para cambiar de la pantalla bonita al panel real
     document.getElementById('btn-abrir-panel').addEventListener('click', () => {
-      alert('Aquí se cargará tu sistema completo de mensualidades NetwortsML. En el siguiente paso lo integramos.');
+      document.querySelector('.app-shell').style.display = "none";
+      document.getElementById('panel-clientes').style.display = "block";
     });
 
-    // Registro del Service Worker (PWA)
+    // ======== TU LÓGICA COMPLETA DEL SISTEMA ========
+
+    const STORAGE_KEY = "mensualidades_clientes_v2";
+    const MESES_CORTOS = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+
+    function cargarClientes() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      try {
+        const arr = JSON.parse(raw);
+        return arr.map(c => ({ historialPagos: {}, ...c, historialPagos: c.historialPagos || {} }));
+      } catch {
+        return [];
+      }
+    }
+
+    function guardarClientes(lista) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
+    }
+
+    function obtenerMesActualKey() {
+      const hoy = new Date();
+      return hoy.getFullYear() + "-" + String(hoy.getMonth()+1).padStart(2,"0");
+    }
+
+    /* ESTADO CLIENTE */
+    function calcularEstadoCliente(c) {
+      const hoy = new Date();
+      const año = hoy.getFullYear();
+      const mesActual = hoy.getMonth();
+      const mesKey = obtenerMesActualKey();
+
+      if (c.historialPagos[mesKey]) {
+        return { tipo:"ok", etiqueta:"PAGADO", diasAtraso:0 };
+      }
+
+      let diasAtraso = 0;
+      if (c.diaPago) {
+        const fechaPago = new Date(año, mesActual, c.diaPago);
+        if (hoy > fechaPago) {
+          diasAtraso = Math.floor((hoy - fechaPago)/(1000*60*60*24));
+        }
+      }
+
+      const corte = c.corteDias != null ? Number(c.corteDias) : 5;
+
+      if (diasAtraso > 0 && diasAtraso <= corte) {
+        return { tipo:"gracia", etiqueta:`EN GRACIA (${diasAtraso})`, diasAtraso };
+      }
+
+      if (diasAtraso > corte) {
+        return { tipo:"pendiente", etiqueta:`PENDIENTE (${diasAtraso})`, diasAtraso };
+      }
+
+      return { tipo:"pendiente", etiqueta:"PENDIENTE", diasAtraso };
+    }
+
+    function obtenerClaseBadge(e) {
+      if (e.tipo === "ok") return "badge badge-ok";
+      if (e.tipo === "gracia") return "badge badge-gracia";
+      return "badge badge-pendiente";
+    }
+
+    /* TABLA PRINCIPAL */
+    function renderTablaClientes(filtro="") {
+      const tbody = document.getElementById("tabla-clientes");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+
+      let clientes = cargarClientes();
+
+      if (filtro.trim() !== "") {
+        const f = filtro.toLowerCase();
+        clientes = clientes.filter(c =>
+          (c.nombre||"").toLowerCase().includes(f) ||
+          (c.direccion||"").toLowerCase().includes(f) ||
+          (c.plan||"").toLowerCase().includes(f)
+        );
+      }
+
+      if (clientes.length===0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#9ca3af;">Sin clientes</td></tr>`;
+        return;
+      }
+
+      clientes.sort((a,b)=> (a.nombre||"").localeCompare(b.nombre||"","es"));
+      const mesKey = obtenerMesActualKey();
+
+      for (const c of clientes) {
+        const tr = document.createElement("tr");
+        const estado = calcularEstadoCliente(c);
+
+        const tdNombre = document.createElement("td");
+        tdNombre.innerHTML = `<strong>${c.nombre}</strong><br><span class="small">${c.telefono||""}</span>`;
+
+        const tdPlan = document.createElement("td");
+        tdPlan.textContent = c.plan||"";
+
+        const tdMonto = document.createElement("td");
+        tdMonto.textContent = c.monto ? "$"+c.monto : "-";
+        tdMonto.classList.add("hide-mobile");
+
+        const tdDireccion = document.createElement("td");
+        tdDireccion.textContent = c.direccion||"";
+        tdDireccion.classList.add("hide-mobile");
+
+        const tdDiaPago = document.createElement("td");
+        tdDiaPago.textContent = c.diaPago||"-";
+
+        const tdCorte = document.createElement("td");
+        tdCorte.textContent = c.corteDias||"-";
+
+        const tdEstado = document.createElement("td");
+        tdEstado.innerHTML = `<span class="${obtenerClaseBadge(estado)}">${estado.etiqueta}</span>`;
+
+        const tdAcc = document.createElement("td");
+
+        const btnPay = document.createElement("button");
+        btnPay.className = "btn btn-sm btn-primary";
+        btnPay.textContent = c.historialPagos[mesKey] ? "Pendiente" : "Pagado";
+        btnPay.onclick = () => marcarPagadoMesActual(c.id);
+
+        const btnEdit = document.createElement("button");
+        btnEdit.className = "btn btn-sm btn-secondary";
+        btnEdit.style.marginLeft="4px";
+        btnEdit.textContent = "Editar";
+        btnEdit.onclick = () => cargarClienteEnFormulario(c.id);
+
+        const btnMeses = document.createElement("button");
+        btnMeses.className = "btn btn-sm btn-secondary";
+        btnMeses.style.marginLeft="4px";
+        btnMeses.textContent = "Meses";
+        btnMeses.onclick = () => abrirModalMeses(c.id);
+
+        const btnDel = document.createElement("button");
+        btnDel.className = "btn btn-sm btn-danger";
+        btnDel.style.marginLeft="4px";
+        btnDel.textContent = "Borrar";
+        btnDel.onclick = () => borrarCliente(c.id);
+
+        tdAcc.appendChild(btnPay);
+        tdAcc.appendChild(btnEdit);
+        tdAcc.appendChild(btnMeses);
+        tdAcc.appendChild(btnDel);
+
+        tr.appendChild(tdNombre);
+        tr.appendChild(tdPlan);
+        tr.appendChild(tdMonto);
+        tr.appendChild(tdDireccion);
+        tr.appendChild(tdDiaPago);
+        tr.appendChild(tdCorte);
+        tr.appendChild(tdEstado);
+        tr.appendChild(tdAcc);
+
+        tbody.appendChild(tr);
+      }
+
+      renderReporteAnual();
+    }
+
+    /* REPORTE ANUAL */
+    function obtenerAniosDeHistorial(clientes) {
+      const años = new Set([new Date().getFullYear()]);
+      for (const c of clientes) {
+        if (c.historialPagos) {
+          for (const k of Object.keys(c.historialPagos)) {
+            const año = Number(k.split("-")[0]);
+            if (!isNaN(año)) años.add(año);
+          }
+        }
+      }
+      return [...años].sort();
+    }
+
+    function renderOpcionesAnios() {
+      const clientes = cargarClientes();
+      const años = obtenerAniosDeHistorial(clientes);
+      const select = document.getElementById("reporte-anio");
+      const actual = new Date().getFullYear();
+      if (!select) return;
+
+      select.innerHTML = "";
+      años.forEach(a=>{
+        const o = document.createElement("option");
+        o.value=a;
+        o.textContent=a;
+        if (a===actual) o.selected=true;
+        select.appendChild(o);
+      });
+    }
+
+    function renderReporteAnual() {
+      const select = document.getElementById("reporte-anio");
+      const th = document.getElementById("reporte-header");
+      const tb = document.getElementById("reporte-body");
+      if (!select || !th || !tb) return;
+
+      renderOpcionesAnios();
+
+      const clientes = cargarClientes();
+      const año = Number(select.value);
+
+      th.innerHTML="";
+      tb.innerHTML="";
+
+      let h = `<th>Cliente</th>`;
+      MESES_CORTOS.forEach(m=> h+=`<th>${m}</th>`);
+      th.innerHTML = h;
+
+      clientes.sort((a,b)=> (a.nombre||"").localeCompare(b.nombre||"","es"));
+
+      for (const c of clientes) {
+        let fila = `<td><strong>${c.nombre}</strong></td>`;
+        for (let i=1;i<=12;i++) {
+          const key = `${año}-${String(i).padStart(2,"0")}`;
+          fila += `<td style="text-align:center;color:${c.historialPagos[key]?'#22c55e':'#fca5a5'};">
+                    ${c.historialPagos[key]?'✔':'✖'}
+                   </td>`;
+        }
+        tb.innerHTML += `<tr>${fila}</tr>`;
+      }
+    }
+
+    /* PAGO MES ACTUAL */
+    function marcarPagadoMesActual(id) {
+      let clientes = cargarClientes();
+      const i = clientes.findIndex(c=>c.id===id);
+      if (i===-1) return;
+
+      const key = obtenerMesActualKey();
+      clientes[i].historialPagos[key] = !clientes[i].historialPagos[key];
+
+      guardarClientes(clientes);
+      const buscador = document.getElementById("buscador");
+      renderTablaClientes(buscador ? buscador.value : "");
+    }
+
+    /* EDITAR CLIENTE */
+    function cargarClienteEnFormulario(id) {
+      const clientes = cargarClientes();
+      const c = clientes.find(x=>x.id===id);
+      if (!c) return;
+
+      document.getElementById("cliente-id").value = c.id;
+      document.getElementById("nombre").value = c.nombre;
+      document.getElementById("telefono").value = c.telefono||"";
+      document.getElementById("direccion").value = c.direccion||"";
+      document.getElementById("plan").value = c.plan||"";
+      document.getElementById("monto").value = c.monto||"";
+      document.getElementById("dia-pago").value = c.diaPago||"";
+      document.getElementById("corte-dias").value = c.corteDias||"";
+      document.getElementById("notas").value = c.notas||"";
+
+      document.getElementById("form-title").textContent = "Editar cliente";
+    }
+
+    const form = document.getElementById("cliente-form");
+    if (form) {
+      form.addEventListener("submit", e=>{
+        e.preventDefault();
+
+        const id = document.getElementById("cliente-id").value || crypto.randomUUID();
+
+        const cliente = {
+          id,
+          nombre: document.getElementById("nombre").value.trim(),
+          telefono: document.getElementById("telefono").value.trim(),
+          direccion: document.getElementById("direccion").value.trim(),
+          plan: document.getElementById("plan").value.trim(),
+          monto: Number(document.getElementById("monto").value)||null,
+          diaPago: Number(document.getElementById("dia-pago").value)||null,
+          corteDias: Number(document.getElementById("corte-dias").value)||null,
+          notas: document.getElementById("notas").value.trim(),
+          historialPagos: {}
+        };
+
+        let clientes = cargarClientes();
+        const idx = clientes.findIndex(c=>c.id===id);
+
+        if (idx!==-1) {
+          cliente.historialPagos = clientes[idx].historialPagos;
+          clientes[idx] = cliente;
+        } else {
+          clientes.push(cliente);
+        }
+
+        guardarClientes(clientes);
+        e.target.reset();
+        document.getElementById("cliente-id").value="";
+        renderTablaClientes();
+      });
+    }
+
+    const buscador = document.getElementById("buscador");
+    if (buscador) {
+      buscador.addEventListener("input", function(){
+        renderTablaClientes(this.value);
+      });
+    }
+
+    const selectReporte = document.getElementById("reporte-anio");
+    if (selectReporte) {
+      selectReporte.addEventListener("change", function(){
+        renderReporteAnual();
+      });
+    }
+
+    /* BORRAR */
+    function borrarCliente(id) {
+      if (!confirm("¿Eliminar cliente?")) return;
+      let clientes = cargarClientes().filter(c=>c.id!==id);
+      guardarClientes(clientes);
+      renderTablaClientes();
+    }
+
+    /* ========= MODAL MULTIANUAL ========= */
+    let clienteEditandoMeses = null;
+    let bufferHistorial = {};
+
+    function abrirModalMeses(id) {
+      const clientes = cargarClientes();
+      const c = clientes.find(x => x.id === id);
+      if (!c) return;
+
+      const esOtroCliente = clienteEditandoMeses !== id;
+      const bufferVacio = !bufferHistorial || Object.keys(bufferHistorial).length === 0;
+
+      if (esOtroCliente || bufferVacio) {
+        bufferHistorial = JSON.parse(JSON.stringify(c.historialPagos || {}));
+      }
+
+      clienteEditandoMeses = id;
+
+      document.getElementById("modal-nombre").textContent = c.nombre;
+
+      const añoActual = new Date().getFullYear();
+      const selAño = document.getElementById("modal-anio");
+
+      if (selAño.innerHTML.trim() === "") {
+        for (let a = añoActual - 5; a <= añoActual + 5; a++) {
+          const op = document.createElement("option");
+          op.value = a;
+          op.textContent = a;
+          if (a === añoActual) op.selected = true;
+          selAño.appendChild(op);
+        }
+      }
+
+      const añoSeleccionado = Number(selAño.value);
+      const cont = document.getElementById("lista-meses");
+      cont.innerHTML = "";
+
+      const MESES = [
+        "Enero","Febrero","Marzo","Abril","Mayo","Junio",
+        "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"
+      ];
+
+      MESES.forEach((mes, i) => {
+        const mesNum = String(i + 1).padStart(2, "0");
+        const key = `${añoSeleccionado}-${mesNum}`;
+
+        const pagadoActual = bufferHistorial[key] === true;
+
+        const fila = document.createElement("div");
+        fila.style = `
+          display:flex;
+          justify-content:space-between;
+          margin:6px 0;
+          padding:6px;
+          background:#0f172a;
+          border-radius:8px;
+        `;
+
+        const label = document.createElement("span");
+        label.textContent = mes;
+
+        const btn = document.createElement("button");
+        btn.className = "btn btn-sm " + (pagadoActual ? "btn-primary" : "btn-danger");
+        btn.textContent = pagadoActual ? "✔ Pagado" : "✖ Pendiente";
+
+        btn.onclick = () => {
+          bufferHistorial[key] = !pagadoActual;
+          abrirModalMeses(id);
+        };
+
+        fila.appendChild(label);
+        fila.appendChild(btn);
+        cont.appendChild(fila);
+      });
+
+      document.getElementById("modal-meses").style.display = "flex";
+    }
+
+    function cerrarModalMeses() {
+      clienteEditandoMeses = null;
+      bufferHistorial = {};
+      const modal = document.getElementById("modal-meses");
+      if (modal) {
+        modal.style.display = "none";
+      }
+    }
+
+    function guardarCambiosHistorial() {
+      let clientes = cargarClientes();
+      const idx = clientes.findIndex(c => c.id === clienteEditandoMeses);
+
+      if (idx === -1) {
+        cerrarModalMeses();
+        return;
+      }
+
+      clientes[idx].historialPagos = bufferHistorial;
+
+      guardarClientes(clientes);
+
+      cerrarModalMeses();
+
+      const filtro = document.getElementById("buscador")
+        ? document.getElementById("buscador").value
+        : "";
+      renderTablaClientes(filtro);
+      renderReporteAnual();
+    }
+
+    // Inicializar tabla en cuanto cargue DOM
+    renderTablaClientes();
+
+    // ====== Service Worker PWA ======
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker
