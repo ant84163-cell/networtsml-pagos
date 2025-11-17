@@ -5,47 +5,439 @@
   <title>NetwortsML – Pagos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- PWA -->
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#020617">
   <link rel="icon" href="icon-192.png" />
 
   <style>
-    body {
+    * {
+      box-sizing: border-box;
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0f172a;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: #e5e7eb;
+      background:
+        radial-gradient(circle at top left, #22c55e22, transparent 55%),
+        radial-gradient(circle at bottom right, #0ea5e922, transparent 55%),
+        #020617;
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 100vh;
-      text-align: center;
+      padding: 16px;
     }
-    .card {
-      background: #111827;
-      padding: 16px 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-      max-width: 320px;
+
+    .app-shell {
+      width: 100%;
+      max-width: 900px;
+      background: rgba(15,23,42,0.95);
+      border-radius: 24px;
+      border: 1px solid rgba(148,163,184,0.35);
+      box-shadow:
+        0 24px 60px rgba(15,23,42,0.9),
+        0 0 0 1px rgba(15,23,42,1);
+      overflow: hidden;
+      backdrop-filter: blur(18px);
     }
-    h1 {
-      margin-top: 0;
-      font-size: 18px;
+
+    .app-header {
+      padding: 18px 22px;
+      border-bottom: 1px solid rgba(30,64,175,0.45);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: linear-gradient(135deg, #020617 0%, #0f172a 45%, #06141f 100%);
     }
-    p {
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 16px;
+      background: radial-gradient(circle at 30% 20%, #a7f3d0 0, #22c55e 40%, #16a34a 70%, #052e16 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 0 2px rgba(15,23,42,0.9);
+      font-size: 20px;
+    }
+
+    .brand-title {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title span:nth-child(1) {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #a5b4fc;
+    }
+
+    .brand-title span:nth-child(2) {
       font-size: 13px;
       color: #9ca3af;
+    }
+
+    .header-pill {
+      font-size: 11px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(74,222,128,0.45);
+      background: radial-gradient(circle at top left, #bbf7d022, transparent 65%);
+      color: #bbf7d0;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .header-pill span.icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #22c55e;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: #022c22;
+    }
+
+    .app-body {
+      padding: 20px 22px 22px;
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2.4fr);
+      gap: 18px;
+    }
+
+    .hero {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      justify-content: center;
+    }
+
+    .hero-title {
+      font-size: clamp(20px, 3.1vw, 28px);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .hero-title span {
+      color: #22c55e;
+    }
+
+    .hero-subtitle {
+      font-size: 13px;
+      color: #9ca3af;
+      max-width: 360px;
+      line-height: 1.5;
+    }
+
+    .hero-slogan {
+      font-size: 12px;
+      color: #fcd34d;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(30,64,175,0.25);
+      border: 1px solid rgba(129,140,248,0.45);
+      width: fit-content;
+    }
+
+    .hero-slogan span.icon {
+      font-size: 14px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 9px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.08s ease, box-shadow 0.12s ease, background 0.12s ease;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #022c22;
+      font-weight: 600;
+      box-shadow: 0 8px 20px rgba(22,163,74,0.45);
+    }
+
+    .btn-primary span.icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(6,95,70,0.15);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+    }
+
+    .btn-secondary {
+      background: rgba(15,23,42,0.9);
+      color: #e5e7eb;
+      border: 1px solid rgba(75,85,99,0.9);
+    }
+
+    .btn:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: none;
+    }
+
+    .hero-meta {
+      margin-top: 8px;
+      font-size: 11px;
+      color: #6b7280;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .hero-meta span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hero-meta span.dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #4b5563;
+    }
+
+    .panel {
+      background: radial-gradient(circle at top left, rgba(148,163,184,0.08), transparent 60%);
+      border-radius: 18px;
+      border: 1px solid rgba(31,41,55,0.9);
+      padding: 14px 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .panel-header-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #9ca3af;
+    }
+
+    .panel-chip {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.9);
+      border: 1px solid rgba(37,99,235,0.6);
+      color: #bfdbfe;
+    }
+
+    .panel-body {
+      font-size: 12px;
+      color: #9ca3af;
+      line-height: 1.5;
+    }
+
+    .steps {
+      margin-top: 6px;
+      display: grid;
+      gap: 6px;
+      font-size: 11px;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .step-badge {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.95);
+      border: 1px solid rgba(55,65,81,0.95);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #9ca3af;
+      flex-shrink: 0;
+    }
+
+    .step-text b {
+      color: #e5e7eb;
+    }
+
+    .status-pill {
+      margin-top: 8px;
+      font-size: 11px;
+      padding: 6px 9px;
+      border-radius: 10px;
+      background: rgba(6,78,59,0.65);
+      color: #bbf7d0;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-pill span.dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 4px rgba(34,197,94,0.25);
+    }
+
+    @media (max-width: 720px) {
+      .app-shell {
+        border-radius: 20px;
+      }
+      .app-body {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 16px 16px 18px;
+      }
+      .app-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>NetwortsML – Pagos</h1>
-    <p>App lista para instalar como PWA.</p>
-    <p>Luego aquí pegamos tu sistema completo de mensualidades.</p>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-logo">⚡</div>
+        <div class="brand-title">
+          <span>NetwortsML – Pagos</span>
+          <span>Sistema pro de control de mensualidades</span>
+        </div>
+      </div>
+      <div class="header-pill">
+        <span class="icon">✓</span>
+        Instalable como app (PWA)
+      </div>
+    </header>
+
+    <main class="app-body">
+      <section class="hero">
+        <div class="hero-slogan">
+          <span class="icon">📶</span>
+          SIN WIFI 🔥 NO HAY PARAÍSO 🔥
+        </div>
+
+        <h1 class="hero-title">
+          Controla tus <span>clientes y pagos</span> como si fuera un panel profesional.
+        </h1>
+
+        <p class="hero-subtitle">
+          Esta es la versión app de tu sistema. Desde aquí podrás abrir tu panel de mensualidades,
+          ver quién está al día, en gracia o para corte, y llevar un historial por meses.
+        </p>
+
+        <div class="hero-actions">
+          <button class="btn btn-primary" id="btn-abrir-panel">
+            <span class="icon">▶</span>
+            Abrir panel de clientes
+          </button>
+          <button class="btn btn-secondary" disabled>
+            Exportar respaldo (próximamente)
+          </button>
+        </div>
+
+        <div class="hero-meta">
+          <span>💾 Datos locales en tu celular</span>
+          <span class="dot"></span>
+          <span>📲 Diseñado para uso diario</span>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <div class="panel-header">
+          <span class="panel-header-title">estado de la app</span>
+          <span class="panel-chip">Versión 1.0 • Solo diseño</span>
+        </div>
+        <div class="panel-body">
+          <p>
+            Ya tienes lista la base de la app. Lo siguiente es
+            <b>pegar tu sistema completo de mensualidades</b> dentro del panel para que funcione todo:
+          </p>
+
+          <div class="steps">
+            <div class="step">
+              <div class="step-badge">1</div>
+              <div class="step-text">
+                <b>Probamos este diseño en tu cel.</b> Revisa que se vea bien como app instalada.
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-badge">2</div>
+              <div class="step-text">
+                <b>Luego pegamos tu código de clientes y pagos</b> dentro del botón “Abrir panel de clientes”.
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-badge">3</div>
+              <div class="step-text">
+                Opcional: añadimos exportar a Excel, backups y sincronización con VPS.
+              </div>
+            </div>
+          </div>
+
+          <div class="status-pill">
+            <span class="dot"></span>
+            Próximo paso: integrar tu sistema real de mensualidades.
+          </div>
+        </div>
+      </aside>
+    </main>
   </div>
 
   <script>
+    // De momento solo mostramos un aviso.
+    // Después aquí montaremos tu sistema real dentro del shell.
+    document.getElementById('btn-abrir-panel').addEventListener('click', () => {
+      alert('Aquí se cargará tu sistema completo de mensualidades NetwortsML. En el siguiente paso lo integramos.');
+    });
+
+    // Registro del Service Worker (PWA)
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker
