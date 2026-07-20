@@ -1,603 +1,418 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Control de Mensualidades Internet</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b1524">
+<title>networtsml · Control de mensualidades</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- jsPDF para el comprobante en PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0b1524; --card:#111e31; --card2:#0d1828;
+  --line:rgba(148,163,184,.15);
+  --tx:#e8eef8; --mut:#8fa3bf;
+  --acc:#38bdf8; --accbg:rgba(56,189,248,.14);
+  --ok:#34d399; --okbg:rgba(52,211,153,.14);
+  --warn:#fbbf24; --warnbg:rgba(251,191,36,.14);
+  --bad:#f87171; --badbg:rgba(248,113,113,.14);
+  --r:16px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html,body{margin:0}
+body{
+  background: radial-gradient(900px 380px at 50% -120px, rgba(56,189,248,.14), transparent 70%), var(--bg);
+  color:var(--tx);
+  font-family:'Inter',system-ui,sans-serif;
+  min-height:100vh;
+  -webkit-tap-highlight-color:transparent;
+}
+body.noscroll{overflow:hidden}
 
-  <!-- jsPDF para generar PDF del comprobante -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+/* ---------- login ---------- */
+#loginBg{ position:fixed; inset:0; z-index:100;
+  background: radial-gradient(900px 380px at 50% -120px, rgba(56,189,248,.14), transparent 70%), var(--bg);
+  display:flex; align-items:center; justify-content:center; padding:20px;}
+.login-card{ width:100%; max-width:340px;}
+.lgo{ display:flex; align-items:center; justify-content:center; gap:9px;
+  font-family:'Sora'; font-weight:800; font-size:1.15rem; margin-bottom:4px;}
+.lsub{ text-align:center; color:var(--mut); font-size:.78rem; margin-bottom:12px;}
+.lbtn{ width:100%; margin-top:16px;}
+.lerr{ color:#fca5a5; font-size:.78rem; min-height:18px; margin-top:9px; text-align:center;}
 
-  <!-- Firebase 8 (modo sencillo con <script>) -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+/* ---------- header ---------- */
+header{ position:sticky; top:0; z-index:20; backdrop-filter:blur(10px);
+  background:rgba(11,21,36,.8); border-bottom:1px solid var(--line);}
+.head-in{ max-width:760px; margin:0 auto; padding:10px 16px;
+  display:flex; align-items:center; justify-content:space-between; gap:10px;}
+.logo{ display:flex; align-items:center; gap:9px; font-family:'Sora'; font-weight:800; font-size:1rem; letter-spacing:.3px;}
+.logo .dot, .lgo .dot{ width:10px;height:10px;border-radius:50%; background:var(--acc); box-shadow:0 0 12px var(--acc); flex-shrink:0;}
+.logo small{ display:block; font:600 .68rem 'Inter'; color:var(--mut); letter-spacing:.2px; margin-top:1px;}
+.mesnav{ display:flex; align-items:center; gap:4px;}
+.mesnav button{ background:var(--card2); border:1px solid var(--line); color:var(--tx);
+  width:34px;height:34px; border-radius:10px; font-size:1.05rem; cursor:pointer;}
+.mesnav button:active{transform:scale(.92)}
+#mesLabel{ font:700 .9rem 'Sora'; min-width:112px; text-align:center;}
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #0f172a;
-      color: #e5e7eb;
-    }
+main{ max-width:760px; margin:0 auto; padding:16px 16px 120px; display:flex; flex-direction:column; gap:14px;}
+.card{ background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:16px;}
+#aviso{ border-color:rgba(248,113,113,.45); color:#fecaca; font-size:.9rem; line-height:1.6;}
 
-    /* ===== LOGIN APP STYLE ===== */
+/* ---------- hero ---------- */
+.hero .lbl{ color:var(--mut); font:600 .72rem 'Inter'; letter-spacing:.6px; text-transform:uppercase;}
+.hero .big{ font:800 2.1rem/1.15 'Sora'; color:var(--ok); margin:4px 0 2px;}
+.hero .sub{ color:var(--mut); font-size:.83rem; display:flex; justify-content:space-between; gap:10px;}
+.senal{ display:flex; align-items:flex-end; gap:4px; height:34px; margin-top:12px;}
+.senal span{ flex:1; border-radius:3px 3px 1px 1px; background:var(--card2); border:1px solid var(--line); transition:background .4s, border-color .4s;}
+.senal span.on{ background:linear-gradient(180deg,#4ade80,#10b981); border-color:rgba(52,211,153,.6);}
 
-    #login-screen {
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(circle at top, #1f2937, #020617);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 99999;
-    }
+/* ---------- stats ---------- */
+.stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+.stat{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px;}
+.stat .v{ font:800 1.15rem 'Sora';}
+.stat .k{ color:var(--mut); font:600 .68rem 'Inter'; margin-top:3px;}
+.stat.warn .v{color:var(--warn)}
+.stat.bad .v{color:var(--bad)}
 
-    .login-card {
-      width: 90%;
-      max-width: 340px;
-      background: rgba(15,23,42,0.95);
-      border-radius: 16px;
-      padding: 20px 18px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-      border: 1px solid #1f2937;
-      backdrop-filter: blur(6px);
-    }
+/* ---------- panel de deudores ---------- */
+.alerta{ border-color:rgba(248,113,113,.4); padding:14px 16px;
+  background:linear-gradient(180deg,rgba(248,113,113,.10),rgba(248,113,113,.02)), var(--card);}
+.alerta-tit{ font:700 .95rem 'Sora'; color:#fca5a5; display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap;}
+.pill{ background:var(--badbg); color:var(--bad); border-radius:99px; padding:1px 9px; font-size:.72rem; font-weight:700;}
+.tot-adeudo{ margin-left:auto; font:800 .82rem 'Sora'; color:#fca5a5;}
+.fila-meta .acum{ color:#fca5a5; font-weight:800;}
+.fila{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0; border-top:1px solid var(--line);}
+.fila:last-child{padding-bottom:2px}
+.fila-nom{ font-weight:600; font-size:.92rem; display:flex; gap:7px; align-items:center; flex-wrap:wrap;}
+.mini{ font-size:.58rem; font-weight:800; letter-spacing:.5px; padding:2px 6px; border-radius:6px;}
+.mini.vencido{ color:#fecaca; background:rgba(239,68,68,.25); border:1px solid rgba(239,68,68,.5);}
+.mini.gracia{ color:#fde68a; background:rgba(251,191,36,.18); border:1px solid rgba(251,191,36,.45);}
+.fila-meta{ color:var(--mut); font-size:.77rem; margin-top:2px;}
+.fila-acts{ display:flex; gap:6px; align-items:center; flex-shrink:0;}
+.icob{ width:34px;height:34px; display:grid; place-items:center; background:var(--card2);
+  border:1px solid var(--line); border-radius:10px; text-decoration:none; font-size:1rem;}
+.icob:active{transform:scale(.92)}
+.ok-card{ border-color:rgba(52,211,153,.35); color:#a7f3d0; font-weight:600; font-size:.93rem;
+  background:linear-gradient(180deg,rgba(52,211,153,.10),rgba(52,211,153,.02)), var(--card);}
 
-    .login-logo {
-      width: 52px;
-      height: 52px;
-      border-radius: 16px;
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 10px auto;
-      font-size: 24px;
-      font-weight: bold;
-      color: #022c22;
-    }
+/* ---------- buscador y filtros ---------- */
+.toolbar{ display:flex; flex-direction:column; gap:10px;}
+#buscar{ width:100%; background:var(--card2); border:1px solid var(--line); color:var(--tx);
+  border-radius:12px; padding:12px 14px; font:500 .95rem 'Inter'; outline:none;}
+#buscar:focus{ border-color:rgba(56,189,248,.55);}
+#buscar::placeholder{color:var(--mut)}
+.fchips{ display:flex; gap:8px; flex-wrap:wrap;}
+.comunidad-sel{ font:600 .9rem 'Inter'; cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238fa3bf' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 14px center; padding-right:36px;}
+.fchip{ background:var(--card2); border:1px solid var(--line); color:var(--mut);
+  border-radius:99px; padding:7px 14px; font:600 .8rem 'Inter'; cursor:pointer;}
+.fchip.on{ background:var(--accbg); border-color:rgba(56,189,248,.55); color:var(--acc);}
+.comunidad-row{ display:flex; gap:8px;}
+.comunidad-row select{ flex:1; min-width:0;}
+.comunidad-row .btn{ flex-shrink:0; padding:0 16px; font-size:1.1rem;}
+.com-fila{ display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:10px 0; border-top:1px solid var(--line);}
+.com-fila:first-child{border-top:none}
+.com-nom{ font-weight:600; font-size:.92rem;}
+.com-cta{ color:var(--mut); font-size:.75rem; margin-top:2px;}
+.com-vacio{ color:var(--mut); font-size:.85rem; text-align:center; padding:16px 0;}
 
-    .login-title {
-      text-align: center;
-      margin: 0;
-      font-size: 18px;
-    }
+/* ---------- lista de clientes ---------- */
+#lista{ display:flex; flex-direction:column; gap:10px;}
+.cliente{ padding:14px;}
+.cliente.con-deuda{ border-color:rgba(248,113,113,.4);}
+.cli-deuda{ margin-top:11px; padding:9px 11px; border-radius:11px;
+  background:var(--badbg); border:1px solid rgba(248,113,113,.35);
+  color:#fecaca; font-size:.8rem; line-height:1.45;}
+.cli-deuda b{ color:#fca5a5;}
+.cli-top{ display:flex; justify-content:space-between; gap:10px;}
+.cli-nom{ font-weight:700; font-size:1rem;}
+.cli-meta{ color:var(--mut); font-size:.77rem; margin-top:3px; line-height:1.5;}
+.cli-right{ text-align:right; flex-shrink:0;}
+.cli-monto{ font:800 1.05rem 'Sora';}
+.chip{ display:inline-block; margin-top:5px; border-radius:99px; padding:3px 10px; font-size:.68rem; font-weight:700; letter-spacing:.2px;}
+.chip.pagado{ background:var(--okbg); color:var(--ok);}
+.chip.pendiente{ background:var(--accbg); color:var(--acc);}
+.chip.gracia{ background:var(--warnbg); color:var(--warn);}
+.chip.vencido{ background:var(--badbg); color:var(--bad);}
+.cli-acts{ display:flex; gap:8px; margin-top:12px;}
+.cli-acts .btn{flex:1}
+.vacio{ text-align:center; color:var(--mut); padding:40px 10px; font-size:.95rem; line-height:1.7;}
 
-    .login-subtitle {
-      text-align: center;
-      font-size: 11px;
-      color: #9ca3af;
-      margin-top: 4px;
-      margin-bottom: 14px;
-    }
+/* ---------- botones ---------- */
+.btn{ border:none; border-radius:12px; padding:11px 14px; font:700 .84rem 'Inter';
+  cursor:pointer; background:linear-gradient(180deg,#34d399,#10b981); color:#04160e; transition:transform .06s;}
+.btn:active{transform:scale(.97)}
+.btn.acc{ background:linear-gradient(180deg,#38bdf8,#0ea5e9); color:#04121f;}
+.btn.ghost{ background:var(--card2); color:var(--tx); border:1px solid var(--line); font-weight:600;}
+.btn.danger{ background:transparent; border:1px solid rgba(248,113,113,.45); color:var(--bad); font-weight:600;}
+.btn.xs{ padding:8px 12px; font-size:.76rem; border-radius:10px;}
+.btn:disabled{ opacity:.5; cursor:not-allowed;}
+#fab{ position:fixed; right:18px; bottom:calc(20px + env(safe-area-inset-bottom));
+  width:58px; height:58px; border-radius:50%; border:none;
+  background:linear-gradient(180deg,#38bdf8,#0ea5e9); color:#04121f;
+  font-size:2rem; line-height:1; cursor:pointer; z-index:30;
+  box-shadow:0 10px 26px rgba(14,165,233,.35);}
+#fab:active{transform:scale(.93)}
 
-    .login-label {
-      font-size: 12px;
-      margin-top: 8px;
-      margin-bottom: 2px;
-      display: block;
-    }
+/* ---------- pie: sesión y respaldo ---------- */
+.foot-row{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
+.foot-row + .foot-row{ margin-top:10px; padding-top:10px; border-top:1px solid var(--line);}
+.small2{ color:var(--mut); font-size:.78rem;}
+.small2 b{ color:var(--tx); font-weight:600;}
 
-    .login-input {
-      width: 100%;
-      padding: 7px 9px;
-      border-radius: 10px;
-      border: 1px solid #4b5563;
-      background: #020617;
-      color: #e5e7eb;
-      font-size: 13px;
-      box-sizing: border-box;
-    }
+/* ---------- modales ---------- */
+.modal-bg{ position:fixed; inset:0; background:rgba(4,9,20,.72); backdrop-filter:blur(4px);
+  display:flex; align-items:flex-end; justify-content:center; z-index:40;}
+.modal{ background:var(--card); border:1px solid var(--line); width:100%; max-width:480px;
+  border-radius:20px 20px 0 0; padding:18px 18px 26px; max-height:92vh; overflow-y:auto;}
+@media(min-width:520px){
+  .modal-bg{align-items:center; padding:20px;}
+  .modal{border-radius:20px;}
+}
+.modal h2{ font:700 1.1rem 'Sora'; margin:0 0 2px;}
+.msub{ color:var(--mut); font-size:.78rem; margin-bottom:10px;}
+label{ display:block; color:var(--mut); font:600 .7rem 'Inter'; letter-spacing:.4px; text-transform:uppercase; margin:11px 0 5px;}
+.inp{ width:100%; background:var(--card2); border:1px solid var(--line); color:var(--tx);
+  border-radius:12px; padding:11px 12px; font:500 .95rem 'Inter'; outline:none;}
+.inp:focus{border-color:rgba(56,189,248,.55)}
+textarea.inp{ resize:vertical; min-height:56px;}
+select.inp{ appearance:none;}
+.dos{ display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.hist{ margin-top:16px; border-top:1px solid var(--line); padding-top:14px;}
+.hist-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+.hist-top .t{ font:700 .9rem 'Sora';}
+.ybtns{ display:flex; gap:6px; align-items:center;}
+.ybtns button{ width:30px;height:30px; border-radius:9px; background:var(--card2);
+  border:1px solid var(--line); color:var(--tx); cursor:pointer;}
+#histYear{ font:700 .9rem 'Sora'; min-width:46px; text-align:center;}
+#histGrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
+.mesb{ padding:11px 0; border-radius:11px; border:1px solid var(--line); background:var(--card2);
+  color:var(--mut); font:600 .8rem 'Inter'; cursor:pointer;}
+.mesb.on{ background:var(--okbg); border-color:rgba(52,211,153,.55); color:var(--ok); font-weight:800;}
+.hist-hint{ color:var(--mut); font-size:.72rem; margin-top:9px; text-align:center;}
+.m-acts{ display:flex; gap:8px; margin-top:18px;}
+.m-acts .esp{flex:1}
 
-    .login-input:focus {
-      outline: none;
-      border-color: #22c55e;
-    }
+/* ---------- recibo ---------- */
+#rTexto{ background:#060d1a; border:1px solid var(--line); border-radius:12px;
+  padding:12px; font:12px/1.5 "Courier New",monospace; color:#d7e2f2;
+  white-space:pre; overflow-x:auto; margin-top:12px;}
 
-    .login-btn {
-      width: 100%;
-      margin-top: 14px;
-      border-radius: 999px;
-      padding: 8px 14px;
-      font-size: 13px;
-      border: none;
-      cursor: pointer;
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      color: #022c22;
-      font-weight: bold;
-    }
-
-    .login-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .login-error {
-      text-align: center;
-      font-size: 11px;
-      color: #fca5a5;
-      margin-top: 8px;
-      min-height: 14px;
-    }
-
-    .login-hint {
-      text-align: center;
-      font-size: 10px;
-      color: #6b7280;
-      margin-top: 8px;
-    }
-
-    header {
-      background: #111827;
-      padding: 10px 12px;
-      border-bottom: 1px solid #1f2937;
-    }
-
-    .header-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 18px;
-    }
-
-    header small {
-      display: block;
-      font-size: 11px;
-      color: #9ca3af;
-    }
-
-    .usuario-label {
-      font-size: 11px;
-      color: #bbf7d0;
-      margin-top: 2px;
-    }
-
-    .btn-logout {
-      padding: 5px 10px;
-      font-size: 11px;
-    }
-
-    main {
-      padding: 12px;
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    .card {
-      background: #111827;
-      border: 1px solid #1f2937;
-      border-radius: 10px;
-      padding: 10px 12px;
-      margin-bottom: 14px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    }
-
-    .card h2 {
-      margin-top: 0;
-      font-size: 15px;
-      margin-bottom: 8px;
-    }
-
-    label {
-      display: block;
-      font-size: 12px;
-      margin-top: 6px;
-      margin-bottom: 2px;
-    }
-
-    input, select, textarea {
-      width: 100%;
-      padding: 6px 8px;
-      font-size: 13px;
-      border-radius: 6px;
-      border: 1px solid #4b5563;
-      background: #020617;
-      color: #e5e7eb;
-      box-sizing: border-box;
-    }
-
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: #22c55e;
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 40px;
-    }
-
-    .row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .col-2 {
-      flex: 1 1 50%;
-    }
-
-    .col-3 {
-      flex: 1 1 33%;
-    }
-
-    .btn {
-      border: none;
-      border-radius: 999px;
-      padding: 7px 14px;
-      font-size: 13px;
-      cursor: pointer;
-      margin-top: 8px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
-    }
-
-    .btn-primary {
-      background: #22c55e;
-      color: #022c22;
-      font-weight: bold;
-    }
-
-    .btn-secondary {
-      background: #1f2937;
-      color: #e5e7eb;
-    }
-
-    .btn-danger {
-      background: #dc2626;
-      color: #fee2e2;
-    }
-
-    .btn-sm {
-      padding: 4px 8px;
-      font-size: 11px;
-      border-radius: 999px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-    }
-
-    th, td {
-      border-bottom: 1px solid #1f2937;
-      padding: 6px 4px;
-      text-align: left;
-    }
-
-    th {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      color: #9ca3af;
-      white-space: nowrap;
-    }
-
-    .small {
-      font-size: 11px;
-      color: #9ca3af;
-    }
-
-    .scroll-x {
-      overflow-x: auto;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-size: 10px;
-      font-weight: bold;
-    }
-
-    .badge-ok { background: #064e3b; color: #a7f3d0; }
-    .badge-pendiente { background: #7f1d1d; color: #fecaca; }
-    .badge-gracia { background: #78350f; color: #fed7aa; }
-
-    pre {
-      background:#020617;
-      color:#e5e7eb;
-      padding:10px;
-      border-radius:8px;
-      font-size:12px;
-      overflow-x:auto;
-      font-family: "Courier New", monospace;
-    }
-
-    .hide-mobile {}
-
-    @media (max-width: 700px) {
-      body { font-size: 13px; }
-      header { padding: 8px 10px; }
-      header h1 { font-size: 16px; }
-      header small { font-size: 10px; }
-      main { padding: 8px; }
-      .card { padding: 8px 9px; margin-bottom: 10px; }
-      .card h2 { font-size: 14px; }
-      label { font-size: 11px; }
-      input, select, textarea { padding: 5px 7px; font-size: 12px; }
-      table { font-size: 11px; }
-      th, td { padding: 4px 3px; }
-      .btn { padding: 4px 8px; font-size: 11px; }
-      .btn-sm { padding: 3px 6px; font-size: 10px; }
-      pre { font-size: 11px; padding: 8px; }
-      .hide-mobile { display: none; }
-      .row { flex-direction: column; }
-      td:last-child { white-space: normal; }
-      .btn-logout { padding: 4px 8px; font-size: 10px; }
-    }
-  </style>
+/* ---------- toast ---------- */
+#toast{ position:fixed; left:50%; transform:translateX(-50%) translateY(20px);
+  bottom:24px; background:#0f1a2e; border:1px solid rgba(52,211,153,.5); color:var(--tx);
+  padding:10px 18px; border-radius:12px; font:600 .85rem 'Inter';
+  opacity:0; pointer-events:none; transition:.25s; z-index:60; max-width:88vw; text-align:center;}
+#toast.show{ opacity:1; transform:translateX(-50%) translateY(0);}
+#toast.bad{ border-color:rgba(248,113,113,.5); color:#fecaca;}
+#toast.warn{ border-color:rgba(251,191,36,.5); color:#fde68a;}
+</style>
 </head>
-
 <body>
 
-<!-- LOGIN APP -->
-<div id="login-screen">
-  <div class="login-card">
-    <div class="login-logo">
-      <span>NW</span>
-    </div>
-    <h2 class="login-title">NetwortsML</h2>
-    <p class="login-subtitle">Acceso solo para personal autorizado</p>
-
-    <label class="login-label">Correo electrónico</label>
-    <input id="login-email" class="login-input" type="email" autocomplete="email" placeholder="correo@ejemplo.com">
-
-    <label class="login-label">Contraseña</label>
-    <input id="login-password" class="login-input" type="password" autocomplete="current-password" placeholder="••••••••">
-
-    <button id="login-btn" class="login-btn" onclick="login()">
-      Entrar al sistema
-    </button>
-
-    <p id="login-error" class="login-error"></p>
+<!-- ====== LOGIN ====== -->
+<div id="loginBg">
+  <div class="card login-card">
+    <div class="lgo"><span class="dot"></span>networtsml</div>
+    <div class="lsub">Control de mensualidades · «Sin WiFi no hay paraíso»</div>
+    <label for="lEmail">Correo</label>
+    <input class="inp" id="lEmail" type="email" autocomplete="email" placeholder="correo@ejemplo.com">
+    <label for="lPass">Contraseña</label>
+    <input class="inp" id="lPass" type="password" autocomplete="current-password" placeholder="••••••••">
+    <button class="btn acc lbtn" id="btnLogin" type="button">Entrar al sistema</button>
+    <div id="lError" class="lerr"></div>
   </div>
 </div>
 
 <header>
-  <div class="header-top">
-    <div>
-      <h1>Sistema de Mensualidades Internet</h1>
-      <small>SIN WIFI 🔥 NO HAY PARAÍSO 🔥</small>
-      <small id="usuario-label" class="usuario-label"></small>
+  <div class="head-in">
+    <div class="logo"><span class="dot"></span><div>networtsml<small>Control de mensualidades</small></div></div>
+    <div class="mesnav">
+      <button id="mesPrev" type="button">‹</button>
+      <div id="mesLabel">—</div>
+      <button id="mesNext" type="button">›</button>
     </div>
-    <button id="logout-btn" class="btn btn-secondary btn-logout" onclick="logout()" style="display:none;">
-      Cerrar sesión
-    </button>
   </div>
 </header>
 
 <main>
 
-  <!-- FORMULARIO -->
-  <div class="card">
-    <h2 id="form-title">Registrar cliente</h2>
+  <div id="aviso" class="card" hidden></div>
 
-    <form id="cliente-form">
-      <input type="hidden" id="cliente-id">
+  <section class="card hero">
+    <div class="lbl">Recolectado del mes</div>
+    <div class="big" id="stRec">$0</div>
+    <div class="sub"><span id="stEsp">de $0 esperado</span><span id="stPct">0%</span></div>
+    <div class="senal" id="senal"></div>
+  </section>
 
-      <div class="row">
-        <div class="col-2">
-          <label>Nombre</label>
-          <input id="nombre" required>
-        </div>
+  <section class="stats">
+    <div class="stat warn"><div class="v" id="stCobrar">$0</div><div class="k">Por cobrar</div></div>
+    <div class="stat"><div class="v" id="stPag">0/0</div><div class="k">Pagados</div></div>
+    <div class="stat bad"><div class="v" id="stVenc">0</div><div class="k">Atrasados</div></div>
+  </section>
 
-        <div class="col-2">
-          <label>Teléfono</label>
-          <input id="telefono">
-        </div>
-      </div>
+  <div id="alertas"></div>
 
-      <label>Dirección</label>
-      <input id="direccion">
-
-      <div class="row">
-        <div class="col-3">
-          <label>Plan</label>
-          <input id="plan">
-        </div>
-
-        <div class="col-3">
-          <label>Monto</label>
-          <input id="monto" type="number">
-        </div>
-
-        <div class="col-3">
-          <label>Día pago</label>
-          <input id="dia-pago" type="number" min="1" max="31" placeholder="1 - 31" />
-        </div>
-      </div>
-
-      <label>Días de gracia</label>
-      <input id="corte-dias" type="number">
-
-      <label>Notas</label>
-      <textarea id="notas"></textarea>
-
-      <button class="btn btn-primary" type="submit">Guardar</button>
-    </form>
-  </div>
-
-
-  <!-- TABLA -->
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <h2>Clientes registrados</h2>
-      <input id="buscador" placeholder="Buscar...">
+  <div class="toolbar">
+    <input id="buscar" type="search" placeholder="Buscar cliente, plan o dirección…" autocomplete="off">
+    <div class="comunidad-row">
+      <select id="filtroComunidad" class="inp comunidad-sel">
+        <option value="">📍 Todas las comunidades</option>
+      </select>
+      <button id="btnAddComunidad" type="button" class="btn ghost" title="Agregar comunidad">＋</button>
+      <button id="btnGestComunidades" type="button" class="btn ghost" title="Gestionar comunidades">🛠</button>
     </div>
-
-    <div class="scroll-x">
-      <table>
-        <thead>
-          <tr>
-            <th>Cliente</th>
-            <th>Plan</th>
-            <th class="hide-mobile">Monto</th>
-            <th class="hide-mobile">Dirección</th>
-            <th>Día pago</th>
-            <th>Corte</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-
-        <tbody id="tabla-clientes"></tbody>
-      </table>
+    <div class="fchips">
+      <button class="fchip on" data-f="todos" type="button">Todos</button>
+      <button class="fchip" data-f="deben" type="button">Sin pagar</button>
+      <button class="fchip" data-f="pagados" type="button">Pagados</button>
     </div>
   </div>
 
-  <!-- RECIBO -->
+  <section id="lista"><div class="vacio">Cargando…</div></section>
+
   <div class="card">
-    <h2>Comprobante de pago</h2>
-    <p class="small">
-      Usa el botón <strong>“Recibo”</strong> (en la tabla o en el modal de meses) para generar el comprobante aquí.
-    </p>
-    <pre id="reciboTexto">(Aquí aparecerá el comprobante generado)</pre>
-    <button class="btn btn-secondary" onclick="copiarRecibo()">Copiar texto</button>
-    <button class="btn btn-primary" onclick="generarPDF()">PDF / WhatsApp</button>
-  </div>
-
-  <!-- REPORTE ANUAL -->
-  <div class="card">
-    <h2>Historial anual</h2>
-    <select id="reporte-anio" style="margin-bottom:6px;"></select>
-
-    <div class="scroll-x">
-      <table>
-        <thead><tr id="reporte-header"></tr></thead>
-        <tbody id="reporte-body"></tbody>
-      </table>
+    <div class="foot-row">
+      <span class="small2">Sesión: <b id="uEmail">—</b></span>
+      <button class="btn ghost xs" id="btnSalir" type="button">Cerrar sesión</button>
     </div>
-  </div>
-
-  <!-- REPORTE MENSUAL + RESPALDO + NUBE -->
-  <div class="card">
-    <h2>Reporte mensual & Respaldo & Nube</h2>
-
-    <div class="row">
-      <div class="col-3">
-        <label>Mes reporte</label>
-        <select id="reporte-mes"></select>
-      </div>
-      <div class="col-3">
-        <label>Año reporte</label>
-        <select id="reporte-mes-anio"></select>
-      </div>
-      <div class="col-3">
-        <label>&nbsp;</label>
-        <button class="btn btn-primary" type="button" onclick="renderReporteMensual()">Ver reporte</button>
-      </div>
-    </div>
-
-    <p class="small" id="reporte-mensual-resumen">
-      Selecciona mes y año y da clic en "Ver reporte".
-    </p>
-
-    <div class="scroll-x">
-      <table>
-        <thead>
-          <tr>
-            <th>Cliente</th>
-            <th>Monto</th>
-            <th>Estado</th>
-          </tr>
-        </thead>
-        <tbody id="reporte-mensual-body"></tbody>
-      </table>
-    </div>
-
-    <hr style="border-color:#1f2937;margin:10px 0;">
-
-    <button type="button" class="btn btn-secondary" onclick="toggleAvanzado()" id="btn-avanzado" style="width:100%;justify-content:center;">
-      ⚙️ Opciones avanzadas
-    </button>
-
-    <div id="seccion-avanzado" style="display:none;margin-top:10px;">
-
-      <h3 style="font-size:14px;margin-top:0;">Respaldo de datos</h3>
-      <p class="small">
-        Exporta tus clientes e historial a un archivo .json y guárdalo en tu nube o USB.  
-        Si cambias de celular o formateas, solo importa el archivo y recuperarás todo.
-      </p>
-
-      <div class="row">
-        <div class="col-3">
-          <button type="button" class="btn btn-secondary" onclick="exportarRespaldo()">📤 Exportar respaldo</button>
-        </div>
-        <div class="col-3">
-          <input type="file" id="importar-archivo" accept=".json" style="font-size:11px;">
-        </div>
-        <div class="col-3">
-          <button type="button" class="btn btn-secondary" onclick="importarRespaldo()">📥 Importar respaldo</button>
-        </div>
-      </div>
-
-      <hr style="border-color:#1f2937;margin:10px 0;">
-
-      <h3 style="font-size:14px;margin-top:0;">Sincronización en la nube (Firebase)</h3>
-      <p class="small">
-        Los cambios se sincronizan automáticamente con Firestore.  
-        Si quieres forzar subir lo que tienes local ahora, usa este botón:
-      </p>
-
-      <button type="button" class="btn btn-primary" onclick="subirANube()">☁ Subir datos locales a la nube</button>
-
+    <div class="foot-row">
+      <span class="small2">Respaldo de datos (.json)</span>
+      <span style="display:flex;gap:8px;">
+        <button class="btn ghost xs" id="btnExp" type="button">📤 Exportar</button>
+        <button class="btn ghost xs" id="btnImp" type="button">📥 Importar</button>
+      </span>
+      <input type="file" id="impFile" accept=".json" hidden>
     </div>
   </div>
 
 </main>
 
+<button id="fab" type="button" title="Nuevo cliente">＋</button>
 
-<!-- MODAL MULTIANUAL -->
-<div id="modal-meses" 
-     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(3px);z-index:9999;justify-content:center;align-items:center;">
-  
-  <div style="background:#111827;padding:20px;border-radius:12px;width:90%;max-width:420px;">
-    
-    <h2 style="margin-top:0;font-size:18px;text-align:center;">
-      Editar meses — <span id="modal-nombre"></span>
-    </h2>
+<!-- ====== MODAL CLIENTE ====== -->
+<div id="modalBg" class="modal-bg" hidden>
+  <div class="modal">
+    <h2 id="mTitulo">Nuevo cliente</h2>
+    <div class="msub" id="mSub"></div>
 
-    <div style="text-align:center;margin-bottom:10px;">
-      <label style="font-size:12px;color:#9ca3af;">Año:</label>
-      <select id="modal-anio"
-              onchange="abrirModalMeses(clienteEditandoMeses)"
-              style="background:#0f172a;color:#e5e7eb;border-radius:6px;border:1px solid #4b5563;padding:4px 8px;">
-      </select>
+    <label for="fNombre">Nombre</label>
+    <input class="inp" id="fNombre" type="text" placeholder="Nombre del cliente">
+
+    <div class="dos">
+      <div>
+        <label for="fTel">Teléfono</label>
+        <input class="inp" id="fTel" type="tel" placeholder="10 dígitos">
+      </div>
+      <div>
+        <label for="fMonto">Monto mensual ($)</label>
+        <input class="inp" id="fMonto" type="number" inputmode="decimal" placeholder="350">
+      </div>
     </div>
 
-    <p style="font-size:12px;color:#9ca3af;text-align:center;margin-top:-4px;">
-      Toca para marcar ✔ pagado o ✖ pendiente. Si está pagado aparecerá botón <strong>Recibo</strong>.
-    </p>
+    <div class="dos">
+      <div>
+        <label for="fPlan">Plan</label>
+        <input class="inp" id="fPlan" type="text" placeholder="Ej. 10 megas">
+      </div>
+      <div>
+        <label for="fDir">Dirección</label>
+        <input class="inp" id="fDir" type="text" placeholder="Comunidad" list="listaComunidades" autocomplete="off">
+        <datalist id="listaComunidades"></datalist>
+      </div>
+    </div>
 
-    <div id="lista-meses"></div>
+    <div class="dos">
+      <div>
+        <label for="fDiaPago">Día de pago</label>
+        <input class="inp" id="fDiaPago" type="number" min="1" max="31" placeholder="20">
+      </div>
+      <div>
+        <label for="fCorte">Días de gracia</label>
+        <input class="inp" id="fCorte" type="number" min="0" max="31" placeholder="5">
+      </div>
+    </div>
 
-    <div style="text-align:right;margin-top:12px;">
-      <button type="button" onclick="cerrarModalMeses()" class="btn btn-secondary">
-        Cerrar
-      </button>
-      <button type="button" onclick="guardarCambiosHistorial()" class="btn btn-primary">
-        Guardar
-      </button>
+    <label for="fNotas">Notas</label>
+    <textarea class="inp" id="fNotas" placeholder="Opcional"></textarea>
+
+    <div class="hist" id="histSec" hidden>
+      <div class="hist-top">
+        <div class="t">Pagos por mes</div>
+        <div class="ybtns">
+          <button id="histPrev" type="button">‹</button>
+          <div id="histYear">2026</div>
+          <button id="histNext" type="button">›</button>
+        </div>
+      </div>
+      <div id="histGrid"></div>
+      <div class="hist-hint">Toca un mes para marcar o quitar el pago · se guarda al instante</div>
+    </div>
+
+    <div class="m-acts">
+      <button class="btn danger" id="btnDel" type="button" hidden>Borrar</button>
+      <span class="esp"></span>
+      <button class="btn ghost" id="btnCancel" type="button">Cancelar</button>
+      <button class="btn acc" id="btnSave" type="button">Guardar</button>
     </div>
   </div>
 </div>
 
-<script>
-const STORAGE_KEY = "mensualidades_clientes_v2";
-const MESES_CORTOS = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-const MESES_LARGOS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+<!-- ====== MODAL RECIBO ====== -->
+<div id="reciboBg" class="modal-bg" hidden>
+  <div class="modal">
+    <h2 id="rTitulo">Recibo</h2>
+    <div class="msub" id="rSub"></div>
 
-/* ==== FIREBASE CONFIG ==== */
+    <label for="rMetodo">Método de pago</label>
+    <select class="inp" id="rMetodo">
+      <option value="EFECTIVO" selected>Efectivo</option>
+      <option value="TRANSFERENCIA">Transferencia</option>
+      <option value="DEPÓSITO">Depósito</option>
+      <option value="OTRO">Otro</option>
+    </select>
+
+    <pre id="rTexto"></pre>
+
+    <div class="m-acts">
+      <button class="btn ghost" id="rCerrar" type="button">Cerrar</button>
+      <span class="esp"></span>
+      <button class="btn ghost" id="rCopiar" type="button">📋 Copiar</button>
+      <button class="btn acc" id="rPDF" type="button">📄 PDF / WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ====== MODAL GESTIONAR COMUNIDADES ====== -->
+<div id="comModalBg" class="modal-bg" hidden>
+  <div class="modal">
+    <h2>Comunidades</h2>
+    <div class="msub">Toca 🗑 para eliminar una comunidad</div>
+    <div id="comLista"></div>
+    <div class="m-acts">
+      <span class="esp"></span>
+      <button class="btn ghost" id="btnComCerrar" type="button">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+/* ============================================================
+   Config de Firebase (la misma de tu app anterior, ya integrada)
+   ============================================================ */
 const firebaseConfig = {
   apiKey: "AIzaSyCSJJa_7QOgRzo0waEa-tUsHHWd_QAdFz8",
   authDomain: "networtsml-pro.firebaseapp.com",
@@ -607,1005 +422,772 @@ const firebaseConfig = {
   appId: "1:244577304776:web:ec92da03925406217e65fd"
 };
 
-// Inicializar Firebase solo si no está inicializado
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
+const TEL_SOPORTE = "+52-232-147-8390";
+const ATENDIDO_POR = "SAUL";
+
+// ---------- utilidades ----------
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const money = n => (Number(n)||0).toLocaleString('es-MX',{style:'currency',currency:'MXN',minimumFractionDigits:0,maximumFractionDigits:2});
+const keyDe = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const MESES_LARGOS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const ETIQ = { pagado:'Pagado ✓', pendiente:'Por pagar', gracia:'En gracia', vencido:'Vencido ⚡' };
+const nuevoId = () => (crypto.randomUUID ? crypto.randomUUID() : 'c' + Date.now() + Math.random().toString(16).slice(2));
+
+// ---------- estado ----------
+let auth = null, db = null, unsub = null;
+let clientes = [], cargado = false;
+let mesVista = new Date(); mesVista = new Date(mesVista.getFullYear(), mesVista.getMonth(), 1);
+let filtro = 'todos', q = '', comunidad = '';
+let comunidadesGuardadas = [];
+let editIdx = -1, histYear = new Date().getFullYear();
+let reciboCtx = null;
+
+// Lectores tolerantes (misma estructura de tu app anterior)
+const nombreDe = c => { const n = (c.nombre || '').toString().trim(); return n || 'Cliente sin nombre'; };
+const montoDe  = c => Number(c.monto ?? c.mensualidad ?? c.precio) || 0;
+const telDe    = c => (c.telefono ?? c.tel ?? '').toString();
+const dirDe    = c => (c.direccion ?? '').toString();
+const planDe   = c => (c.plan ?? '').toString();
+const hpDe     = c => (c.historialPagos && typeof c.historialPagos === 'object') ? c.historialPagos : {};
+
+function fechaPago(c, mes){
+  let dp = Number(c.diaPago); if (!Number.isFinite(dp) || dp < 1) dp = 1;
+  const ult = new Date(mes.getFullYear(), mes.getMonth()+1, 0).getDate();
+  if (dp > ult) dp = ult;
+  return new Date(mes.getFullYear(), mes.getMonth(), dp);
 }
-const auth = firebase.auth();
-const db = firebase.firestore();
-const nubeDocRef = db.collection("networtsml").doc("clientes");
-
-let appInicializada = false;
-
-/* ========= CARGA / GUARDADO LOCAL ========= */
-
-function cargarClientes() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return [];
-  try {
-    const arr = JSON.parse(raw);
-    return arr.map(c => ({
-      historialPagos: {},
-      folioCliente: c.folioCliente || 0,
-      ...c,
-      historialPagos: c.historialPagos || {}
-    }));
-  } catch {
-    return [];
-  }
+function graciaDe(c){ return c.corteDias != null && c.corteDias !== '' ? Number(c.corteDias) || 0 : 5; }
+function estadoDe(c, mes){
+  const key = keyDe(mes);
+  if (hpDe(c)[key]) return 'pagado';
+  const hoyKey = keyDe(new Date());
+  if (key > hoyKey) return 'pendiente';   // mes futuro
+  if (key < hoyKey) return 'vencido';     // mes pasado sin pagar
+  const fp = fechaPago(c, mes);
+  const lim = new Date(fp); lim.setDate(lim.getDate() + graciaDe(c));
+  const h0 = new Date(); h0.setHours(0,0,0,0);
+  if (h0 > lim) return 'vencido';
+  if (h0 > fp)  return 'gracia';
+  return 'pendiente';
 }
-
-function guardarClientes(lista) {
-  // Guarda en el dispositivo
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
-  // Sincroniza automáticamente con la nube
-  if (auth.currentUser) {
-    subirANube();
-  }
-}
-
-function obtenerMesActualKey() {
-  const hoy = new Date();
-  return hoy.getFullYear() + "-" + String(hoy.getMonth()+1).padStart(2,"0");
-}
-
-/* ESTADO CLIENTE */
-function calcularEstadoCliente(c) {
-  const hoy = new Date();
-  const año = hoy.getFullYear();
-  const mesActual = hoy.getMonth();
-  const mesKey = obtenerMesActualKey();
-
-  if (c.historialPagos[mesKey]) {
-    return { tipo:"ok", etiqueta:"PAGADO", diasAtraso:0 };
-  }
-
-  let diasAtraso = 0;
-  if (c.diaPago) {
-    const fechaPago = new Date(año, mesActual, c.diaPago);
-    if (hoy > fechaPago) {
-      diasAtraso = Math.floor((hoy - fechaPago)/(1000*60*60*24));
-    }
-  }
-
-  const corte = c.corteDias != null ? Number(c.corteDias) : 5;
-
-  if (diasAtraso > 0 && diasAtraso <= corte) {
-    return { tipo:"gracia", etiqueta:`EN GRACIA (${diasAtraso})`, diasAtraso };
-  }
-
-  if (diasAtraso > corte) {
-    return { tipo:"pendiente", etiqueta:`PENDIENTE (${diasAtraso})`, diasAtraso };
-  }
-
-  return { tipo:"pendiente", etiqueta:"PENDIENTE", diasAtraso };
+function diasTarde(c, mes){
+  const h0 = new Date(); h0.setHours(0,0,0,0);
+  const fp = fechaPago(c, mes); fp.setHours(0,0,0,0);
+  return Math.max(0, Math.round((h0 - fp) / 864e5));
 }
 
-function obtenerClaseBadge(e) {
-  if (e.tipo === "ok") return "badge badge-ok";
-  if (e.tipo === "gracia") return "badge badge-gracia";
-  return "badge badge-pendiente";
-}
-
-/* TABLA PRINCIPAL */
-function renderTablaClientes(filtro="") {
-  const tbody = document.getElementById("tabla-clientes");
-  tbody.innerHTML = "";
-
-  let clientes = cargarClientes();
-
-  if (filtro.trim() !== "") {
-    const f = filtro.toLowerCase();
-    clientes = clientes.filter(c =>
-      (c.nombre||"").toLowerCase().includes(f) ||
-      (c.direccion||"").toLowerCase().includes(f) ||
-      (c.plan||"").toLowerCase().includes(f)
-    );
-  }
-
-  if (clientes.length===0) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#9ca3af;">Sin clientes</td></tr>`;
-    return;
-  }
-
-  clientes.sort((a,b)=> (a.nombre||"").localeCompare(b.nombre||"","es"));
-  const mesKey = obtenerMesActualKey();
-
-  for (const c of clientes) {
-
-    const tr = document.createElement("tr");
-    const estado = calcularEstadoCliente(c);
-
-    const tdNombre = document.createElement("td");
-    tdNombre.innerHTML = `<strong>${c.nombre}</strong><br><span class="small">${c.telefono||""}</span>`;
-
-    const tdPlan = document.createElement("td");
-    tdPlan.textContent = c.plan||"";
-
-    const tdMonto = document.createElement("td");
-    tdMonto.textContent = c.monto ? "$"+c.monto : "-";
-    tdMonto.classList.add("hide-mobile");
-
-    const tdDireccion = document.createElement("td");
-    tdDireccion.textContent = c.direccion||"";
-    tdDireccion.classList.add("hide-mobile");
-
-    const tdDiaPago = document.createElement("td");
-    tdDiaPago.textContent = c.diaPago||"-";
-
-    const tdCorte = document.createElement("td");
-    tdCorte.textContent = c.corteDias||"-";
-
-    const tdEstado = document.createElement("td");
-    tdEstado.innerHTML = `<span class="${obtenerClaseBadge(estado)}">${estado.etiqueta}</span>`;
-
-    const tdAcc = document.createElement("td");
-
-    const btnPay = document.createElement("button");
-    btnPay.className = "btn btn-sm btn-primary";
-    btnPay.textContent = c.historialPagos[mesKey] ? "Pendiente" : "Pagado";
-    btnPay.onclick = () => marcarPagadoMesActual(c.id);
-
-    const pagadoMesActual = !!c.historialPagos[mesKey];
-
-    const btnRecibo = document.createElement("button");
-    btnRecibo.className = "btn btn-sm btn-secondary";
-    btnRecibo.style.marginLeft="4px";
-    btnRecibo.textContent = "Recibo";
-
-    if (!pagadoMesActual) {
-      btnRecibo.disabled = true;
-      btnRecibo.style.opacity = "0.4";
-      btnRecibo.title = "Marca primero el mes actual como PAGADO para generar recibo";
-    }
-
-    btnRecibo.onclick = () => generarReciboCliente(c.id);
-
-    const btnEdit = document.createElement("button");
-    btnEdit.className = "btn btn-sm btn-secondary";
-    btnEdit.style.marginLeft="4px";
-    btnEdit.textContent = "Editar";
-    btnEdit.onclick = () => cargarClienteEnFormulario(c.id);
-
-    const btnMeses = document.createElement("button");
-    btnMeses.className = "btn btn-sm btn-secondary";
-    btnMeses.style.marginLeft="4px";
-    btnMeses.textContent = "Meses";
-    btnMeses.onclick = () => abrirModalMeses(c.id);
-
-    const btnDel = document.createElement("button");
-    btnDel.className = "btn btn-sm btn-danger";
-    btnDel.style.marginLeft="4px";
-    btnDel.textContent = "Borrar";
-    btnDel.onclick = () => borrarCliente(c.id);
-
-    tdAcc.appendChild(btnPay);
-    tdAcc.appendChild(btnRecibo);
-    tdAcc.appendChild(btnEdit);
-    tdAcc.appendChild(btnMeses);
-    tdAcc.appendChild(btnDel);
-
-    tr.appendChild(tdNombre);
-    tr.appendChild(tdPlan);
-    tr.appendChild(tdMonto);
-    tr.appendChild(tdDireccion);
-    tr.appendChild(tdDiaPago);
-    tr.appendChild(tdCorte);
-    tr.appendChild(tdEstado);
-    tr.appendChild(tdAcc);
-
-    tbody.appendChild(tr);
-  }
-
-  renderReporteAnual();
-}
-
-/* REPORTE ANUAL */
-function obtenerAniosDeHistorial(clientes) {
-  const años = new Set([new Date().getFullYear()]);
-  for (const c of clientes) {
-    if (c.historialPagos) {
-      for (const k of Object.keys(c.historialPagos)) {
-        const año = Number(k.split("-")[0]);
-        if (!isNaN(año)) años.add(año);
-      }
-    }
-  }
-  return [...años].sort();
-}
-
-function renderOpcionesAnios() {
-  const clientes = cargarClientes();
-  const años = obtenerAniosDeHistorial(clientes);
-  const select = document.getElementById("reporte-anio");
-  const actual = new Date().getFullYear();
-
-  select.innerHTML = "";
-  años.forEach(a=>{
-    const o = document.createElement("option");
-    o.value=a;
-    o.textContent=a;
-    if (a===actual) o.selected=true;
-    select.appendChild(o);
-  });
-}
-
-function renderReporteAnual() {
-  renderOpcionesAnios();
-
-  const clientes = cargarClientes();
-  const año = Number(document.getElementById("reporte-anio").value);
-  const th = document.getElementById("reporte-header");
-  const tb = document.getElementById("reporte-body");
-
-  th.innerHTML="";
-  tb.innerHTML="";
-
-  let h = `<th>Cliente</th>`;
-  MESES_CORTOS.forEach(m=> h+=`<th>${m}</th>`);
-  th.innerHTML = h;
-
-  clientes.sort((a,b)=> (a.nombre||"").localeCompare(b.nombre||"","es"));
-
-  for (const c of clientes) {
-    let fila = `<td><strong>${c.nombre}</strong></td>`;
-    for (let i=1;i<=12;i++) {
-      const key = `${año}-${String(i).padStart(2,"0")}`;
-      fila += `<td style="text-align:center;color:${c.historialPagos[key]?'#22c55e':'#fca5a5'};">
-                ${c.historialPagos[key]?'✔':'✖'}
-               </td>`;
-    }
-    tb.innerHTML += `<tr>${fila}</tr>`;
-  }
-}
-
-/* PAGO MES ACTUAL */
-function marcarPagadoMesActual(id) {
-  let clientes = cargarClientes();
-  const i = clientes.findIndex(c=>c.id===id);
-  if (i===-1) return;
-
-  const key = obtenerMesActualKey();
-  clientes[i].historialPagos[key] = !clientes[i].historialPagos[key];
-
-  guardarClientes(clientes);
-  renderTablaClientes(document.getElementById("buscador").value);
-}
-
-/* EDITAR CLIENTE */
-function cargarClienteEnFormulario(id) {
-  const clientes = cargarClientes();
-  const c = clientes.find(x=>x.id===id);
-  if (!c) return;
-
-  document.getElementById("cliente-id").value = c.id;
-  document.getElementById("nombre").value = c.nombre;
-  document.getElementById("telefono").value = c.telefono||"";
-  document.getElementById("direccion").value = c.direccion||"";
-  document.getElementById("plan").value = c.plan||"";
-  document.getElementById("monto").value = c.monto||"";
-  document.getElementById("dia-pago").value = c.diaPago||"";
-  document.getElementById("corte-dias").value = c.corteDias||"";
-  document.getElementById("notas").value = c.notas||"";
-
-  document.getElementById("form-title").textContent = "Editar cliente";
-}
-
-document.getElementById("cliente-form").addEventListener("submit", e=>{
-  e.preventDefault();
-
-  const id = document.getElementById("cliente-id").value || crypto.randomUUID();
-
-  const cliente = {
-    id,
-    nombre: document.getElementById("nombre").value.trim(),
-    telefono: document.getElementById("telefono").value.trim(),
-    direccion: document.getElementById("direccion").value.trim(),
-    plan: document.getElementById("plan").value.trim(),
-    monto: Number(document.getElementById("monto").value)||null,
-    diaPago: Number(document.getElementById("dia-pago").value)||null,
-    corteDias: Number(document.getElementById("corte-dias").value)||null,
-    notas: document.getElementById("notas").value.trim(),
-    historialPagos: {},
-    folioCliente: 0
-  };
-
-  let clientes = cargarClientes();
-  const idx = clientes.findIndex(c=>c.id===id);
-
-  if (idx!==-1) {
-    cliente.historialPagos = clientes[idx].historialPagos;
-    cliente.folioCliente = clientes[idx].folioCliente || 0;
-    clientes[idx] = cliente;
+// Meses vencidos ACUMULADOS: desde el primer mes con historial (o el mes visto)
+// hasta el mes visto, cuenta los que ya pasaron su fecha y no están pagados.
+function adeudoAcum(c, hasta){
+  const hp = hpDe(c);
+  const keys = Object.keys(hp);
+  // ¿Desde cuándo? Desde el mes más antiguo que aparezca en su historial.
+  // Si nunca ha registrado nada, arranca desde el mes que estás viendo.
+  let ini;
+  if (keys.length){
+    const min = keys.slice().sort()[0];      // "AAAA-MM" más antiguo
+    const [a, m] = min.split('-').map(Number);
+    ini = new Date(a, m - 1, 1);
   } else {
-    clientes.push(cliente);
+    ini = new Date(hasta.getFullYear(), hasta.getMonth(), 1);
   }
-
-  guardarClientes(clientes);
-  e.target.reset();
-  document.getElementById("cliente-id").value="";
-  document.getElementById("form-title").textContent = "Registrar cliente";
-  renderTablaClientes();
-});
-
-/* BUSCADOR */
-document.getElementById("buscador").addEventListener("input", function(){
-  renderTablaClientes(this.value);
-});
-
-document.getElementById("reporte-anio").addEventListener("change", function(){
-  renderReporteAnual();
-});
-
-/* BORRAR */
-function borrarCliente(id) {
-  if (!confirm("¿Eliminar cliente?")) return;
-  let clientes = cargarClientes().filter(c=>c.id!==id);
-  guardarClientes(clientes);
-  renderTablaClientes();
+  const fin = new Date(hasta.getFullYear(), hasta.getMonth(), 1);
+  const hoyKey = keyDe(new Date());
+  const monto = montoDe(c);
+  const meses = [];
+  const cur = new Date(ini);
+  while (cur <= fin){
+    const key = keyDe(cur);
+    // solo cuenta meses cuya fecha de pago ya pasó (no futuros) y sin pagar
+    if (key <= hoyKey && !hp[key] && estadoDe(c, cur) === 'vencido'){
+      meses.push({ key, etiqueta: MESES[cur.getMonth()] + ' ' + String(cur.getFullYear()).slice(2) });
+    }
+    cur.setMonth(cur.getMonth() + 1);
+  }
+  return { count: meses.length, total: meses.length * monto, meses };
 }
+const mesLabelTxt = () => cap(mesVista.toLocaleDateString('es-MX',{month:'long'}));
 
-/* ========= MODAL MULTIANUAL ========= */
-let clienteEditandoMeses = null;
-let bufferHistorial = {};
+// ---------- Firestore ----------
+const DOC = () => db.collection('networtsml').doc('clientes');
 
-function abrirModalMeses(id) {
-  const clientes = cargarClientes();
-  const c = clientes.find(x => x.id === id);
-  if (!c) return;
-
-  const esOtroCliente = clienteEditandoMeses !== id;
-  const bufferVacio = !bufferHistorial || Object.keys(bufferHistorial).length === 0;
-
-  if (esOtroCliente || bufferVacio) {
-    bufferHistorial = JSON.parse(JSON.stringify(c.historialPagos || {}));
-  }
-
-  clienteEditandoMeses = id;
-
-  document.getElementById("modal-nombre").textContent = c.nombre;
-
-  const añoActual = new Date().getFullYear();
-  const selAño = document.getElementById("modal-anio");
-
-  if (selAño.innerHTML.trim() === "") {
-    for (let a = añoActual - 5; a <= añoActual + 5; a++) {
-      const op = document.createElement("option");
-      op.value = a;
-      op.textContent = a;
-      if (a === añoActual) op.selected = true;
-      selAño.appendChild(op);
-    }
-  }
-
-  const añoSeleccionado = Number(selAño.value);
-  const cont = document.getElementById("lista-meses");
-  cont.innerHTML = "";
-
-  const MESES = MESES_LARGOS;
-
-  MESES.forEach((mes, i) => {
-    const mesNum = String(i + 1).padStart(2, "0");
-    const key = `${añoSeleccionado}-${mesNum}`;
-    const pagadoActual = bufferHistorial[key] === true;
-
-    const fila = document.createElement("div");
-    fila.style = `
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:8px;
-      margin:6px 0;
-      padding:6px;
-      background:#0f172a;
-      border-radius:8px;
-    `;
-
-    const label = document.createElement("span");
-    label.textContent = mes;
-
-    const btnEstado = document.createElement("button");
-    btnEstado.className = "btn btn-sm " + (pagadoActual ? "btn-primary" : "btn-danger");
-    btnEstado.textContent = pagadoActual ? "✔ Pagado" : "✖ Pendiente";
-
-    btnEstado.onclick = () => {
-      bufferHistorial[key] = !pagadoActual;
-      abrirModalMeses(id);
-    };
-
-    const btnReciboMes = document.createElement("button");
-    btnReciboMes.className = "btn btn-sm btn-secondary";
-    btnReciboMes.textContent = "Recibo";
-
-    if (!pagadoActual) {
-      btnReciboMes.disabled = true;
-      btnReciboMes.style.opacity = "0.4";
-      btnReciboMes.title = "Marca este mes como PAGADO para generar recibo";
-    }
-
-    btnReciboMes.onclick = () => {
-      generarReciboClienteMes(id, añoSeleccionado, mesNum);
-    };
-
-    const contBotones = document.createElement("div");
-    contBotones.style = "display:flex;gap:6px;";
-    contBotones.appendChild(btnEstado);
-    contBotones.appendChild(btnReciboMes);
-
-    fila.appendChild(label);
-    fila.appendChild(contBotones);
-    cont.appendChild(fila);
+function empezarEscucha(){
+  if (unsub) return;
+  unsub = DOC().onSnapshot(snap => {
+    const d = snap.data() || {};
+    clientes = Array.isArray(d.data) ? d.data : [];
+    comunidadesGuardadas = Array.isArray(d.comunidades) ? d.comunidades : [];
+    cargado = true;
+    $('#aviso').hidden = true;
+    render();
+    if (editIdx >= 0) renderHist();
+  }, err => {
+    console.error(err);
+    const a = $('#aviso');
+    a.hidden = false;
+    a.textContent = '⚠️ No pude leer la base de datos. Revisa tu internet o las reglas de Firestore.';
   });
-
-  document.getElementById("modal-meses").style.display = "flex";
 }
 
-function cerrarModalMeses() {
-  clienteEditandoMeses = null;
-  bufferHistorial = {};
-  const modal = document.getElementById("modal-meses");
-  if (modal) {
-    modal.style.display = "none";
+async function guardar(arr, silencioso){
+  clientes = arr; render();               // respuesta inmediata en pantalla
+  if (editIdx >= 0) renderHist();
+  try {
+    await DOC().set({
+      data: arr,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge:true });
+    if (!silencioso) toast('Guardado ✓');
+  } catch(e) {
+    console.error(e);
+    toast('No se pudo guardar. Revisa tu internet.', 'bad');
   }
 }
 
-function guardarCambiosHistorial() {
-  let clientes = cargarClientes();
-  const idx = clientes.findIndex(c => c.id === clienteEditandoMeses);
-
-  if (idx === -1) {
-    cerrarModalMeses();
-    return;
+async function guardarComunidades(arr){
+  comunidadesGuardadas = arr;
+  try {
+    await DOC().set({ comunidades: arr }, { merge:true });
+  } catch(e) {
+    console.error(e);
+    toast('No se pudo guardar la comunidad. Revisa tu internet.', 'bad');
   }
-
-  clientes[idx].historialPagos = bufferHistorial;
-  guardarClientes(clientes);
-  cerrarModalMeses();
-
-  const filtro = document.getElementById("buscador")
-    ? document.getElementById("buscador").value
-    : "";
-  renderTablaClientes(filtro);
-  renderReporteAnual();
 }
 
-/* ========= RECIBOS (con folio consecutivo por cliente) ========= */
+function togglePago(i, key){
+  const c = clientes[i]; if (!c) return;
+  const hp = { ...hpDe(c) };
+  if (hp[key]) delete hp[key]; else hp[key] = true;
+  guardar(clientes.map((x,j) => j === i ? { ...x, historialPagos: hp } : x));
+}
 
-function generarReciboCliente(idCliente) {
-  let clientes = cargarClientes();
-  const idx = clientes.findIndex(x => x.id === idCliente);
-  if (idx === -1) {
-    alert("Cliente no encontrado.");
+// ---------- render ----------
+function render(){ renderMes(); renderComunidades(); renderStats(); renderAlertas(); renderLista(); }
+
+// Llena el desplegable con las comunidades (direcciones) que existan,
+// sin repetir, ordenadas, y con el número de clientes de cada una.
+function renderComunidades(){
+  const sel = $('#filtroComunidad');
+  if (!sel) return;
+  const cuenta = {};
+  for (const c of clientes){
+    const d = dirDe(c).trim();
+    if (d) cuenta[d] = (cuenta[d] || 0) + 1;
+  }
+  // Incluyo también las comunidades guardadas aunque todavía no tengan clientes
+  for (const n of comunidadesGuardadas){
+    const d = String(n).trim();
+    if (d && !(d in cuenta)) cuenta[d] = 0;
+  }
+  const nombres = Object.keys(cuenta).sort((a,b) => a.localeCompare(b, 'es'));
+  // Si la comunidad seleccionada ya no existe, la reseteo
+  if (comunidad && !cuenta[comunidad]) comunidad = '';
+  const sinDir = clientes.filter(c => !dirDe(c).trim()).length;
+  let html = '<option value="">📍 Todas las comunidades (' + clientes.length + ')</option>';
+  html += nombres.map(n =>
+    '<option value="' + esc(n) + '">' + esc(n) + ' (' + cuenta[n] + ')</option>'
+  ).join('');
+  if (sinDir) html += '<option value="__sin__">Sin comunidad (' + sinDir + ')</option>';
+  sel.innerHTML = html;
+  sel.value = comunidad;
+
+  // Sugerencias para el campo Dirección del formulario (evita duplicados por typos)
+  const dl = $('#listaComunidades');
+  if (dl) dl.innerHTML = nombres.map(n => '<option value="' + esc(n) + '">').join('');
+}
+
+// ---------- gestionar comunidades ----------
+function nombresComunidades(){
+  const cuenta = {};
+  for (const c of clientes){
+    const d = dirDe(c).trim();
+    if (d) cuenta[d] = (cuenta[d] || 0) + 1;
+  }
+  for (const n of comunidadesGuardadas){
+    const d = String(n).trim();
+    if (d && !(d in cuenta)) cuenta[d] = 0;
+  }
+  return cuenta;
+}
+function renderGestComunidades(){
+  const cont = $('#comLista');
+  const cuenta = nombresComunidades();
+  const nombres = Object.keys(cuenta).sort((a,b) => a.localeCompare(b, 'es'));
+  if (!nombres.length){ cont.innerHTML = '<div class="com-vacio">Aún no hay comunidades.</div>'; return; }
+  cont.innerHTML = nombres.map(n => {
+    const n2 = cuenta[n];
+    return '<div class="com-fila">' +
+      '<div><div class="com-nom">' + esc(n) + '</div>' +
+      '<div class="com-cta">' + n2 + (n2 === 1 ? ' cliente' : ' clientes') + '</div></div>' +
+      '<button class="btn danger xs" type="button" data-com="' + esc(n) + '">🗑 Eliminar</button>' +
+      '</div>';
+  }).join('');
+}
+function abrirGestComunidades(){
+  renderGestComunidades();
+  $('#comModalBg').hidden = false;
+  document.body.classList.add('noscroll');
+}
+function cerrarGestComunidades(){
+  $('#comModalBg').hidden = true;
+  document.body.classList.remove('noscroll');
+}
+async function eliminarComunidad(nombre){
+  const afectados = clientes.filter(c => dirDe(c).trim() === nombre);
+  if (afectados.length){
+    if (!confirm('"' + nombre + '" tiene ' + afectados.length +
+      (afectados.length === 1 ? ' cliente' : ' clientes') +
+      '. Si la eliminas, se quedan sin comunidad asignada. ¿Continuar?')) return;
+    await guardar(clientes.map(c => dirDe(c).trim() === nombre ? { ...c, direccion: '' } : c), true);
+  } else if (!confirm('¿Eliminar la comunidad "' + nombre + '"?')){
     return;
   }
-  const c = clientes[idx];
+  await guardarComunidades(comunidadesGuardadas.filter(n => String(n).trim() !== nombre));
+  if (comunidad === nombre) comunidad = '';
+  renderGestComunidades();
+  renderComunidades(); renderStats(); renderAlertas(); renderLista();
+  toast('Comunidad eliminada ✓');
+}
 
-  const mesKeyActual = obtenerMesActualKey();
-  if (!c.historialPagos[mesKeyActual]) {
-    alert("Este cliente está PENDIENTE en el mes actual.\n\nPrimero marca como PAGADO y luego genera el recibo.");
+function renderMes(){
+  $('#mesLabel').textContent = mesLabelTxt() + ' ' + mesVista.getFullYear();
+}
+
+// Clientes según la comunidad escogida (para stats y avisos)
+function clientesEnVista(){
+  if (comunidad === '__sin__') return clientes.filter(c => !dirDe(c).trim());
+  if (comunidad)               return clientes.filter(c => dirDe(c).trim() === comunidad);
+  return clientes;
+}
+
+function renderStats(){
+  const lista = clientesEnVista();
+  let rec = 0, esp = 0, nPag = 0, nAtr = 0;
+  for (const c of lista){
+    const m = montoDe(c); esp += m;
+    const st = estadoDe(c, mesVista);
+    if (st === 'pagado'){ rec += m; nPag++; }
+    if (st === 'gracia' || st === 'vencido') nAtr++;
+  }
+  $('#stRec').textContent = money(rec);
+  $('#stEsp').textContent = 'de ' + money(esp) + ' esperado';
+  const pct = esp > 0 ? Math.round(rec / esp * 100) : 0;
+  $('#stPct').textContent = pct + '%';
+  const barras = $('#senal').children;
+  const llenas = Math.round(pct / 100 * barras.length);
+  for (let i = 0; i < barras.length; i++) barras[i].classList.toggle('on', i < llenas);
+  $('#stCobrar').textContent = money(Math.max(0, esp - rec));
+  $('#stPag').textContent = nPag + '/' + lista.length;
+  $('#stVenc').textContent = nAtr;
+}
+
+function renderAlertas(){
+  const cont = $('#alertas');
+  if (!cargado){ cont.innerHTML = ''; return; }
+  if (keyDe(mesVista) > keyDe(new Date())){ cont.innerHTML = ''; return; } // mes futuro: sin avisos
+  const deudores = clientes
+    .map((c,i) => ({ c, i, st: estadoDe(c, mesVista) }))
+    .filter(x => x.st === 'gracia' || x.st === 'vencido')
+    .filter(x => comunidad === '__sin__' ? !dirDe(x.c).trim()
+               : comunidad ? dirDe(x.c).trim() === comunidad : true)
+    .sort((a,b) => diasTarde(b.c, mesVista) - diasTarde(a.c, mesVista));
+  if (!deudores.length){
+    cont.innerHTML = '<div class="card ok-card">✅ Todos al corriente en ' + esc(mesLabelTxt()) + '</div>';
     return;
   }
+  const rows = deudores.map(({c,i,st}) => {
+    const dias = diasTarde(c, mesVista);
+    const ad = adeudoAcum(c, mesVista);
+    const tel = telDe(c).replace(/\D/g,'');
+    const waNum = tel.length === 10 ? '52' + tel : tel;
+
+    // Mensaje de WhatsApp: si trae varios meses, los menciona; si no, solo el del mes.
+    let waMsg;
+    if (ad.count > 1){
+      waMsg = 'Hola ' + nombreDe(c) + ' 👋, te recuerdo que traes ' + ad.count +
+        ' meses pendientes de tu internet (' + ad.meses.map(m => m.etiqueta).join(', ') +
+        '), un total de ' + money(ad.total) + '. ¡Gracias!';
+    } else {
+      waMsg = 'Hola ' + nombreDe(c) + ' 👋, te recuerdo el pago de tu internet (' +
+        money(montoDe(c)) + ') del mes de ' + mesLabelTxt() + '. ¡Gracias!';
+    }
+    waMsg = encodeURIComponent(waMsg);
+
+    const tag = st === 'vencido'
+      ? ' <span class="mini vencido">VENCIDO</span>'
+      : ' <span class="mini gracia">EN GRACIA</span>';
+
+    // Línea de detalle: meses acumulados + total, o el retraso del mes si solo debe uno.
+    let detalle;
+    if (ad.count > 1){
+      const lista = ad.meses.map(m => m.etiqueta).join(', ');
+      detalle = '<b class="acum">' + ad.count + ' meses:</b> ' + esc(lista) +
+        ' · <b class="acum">' + money(ad.total) + '</b>';
+    } else {
+      detalle = dias + (dias === 1 ? ' día' : ' días') + ' de retraso · debe ' + money(montoDe(c));
+    }
+
+    return '<div class="fila">' +
+      '<div class="fila-info">' +
+        '<div class="fila-nom">' + esc(nombreDe(c)) + tag + '</div>' +
+        '<div class="fila-meta">' + detalle + '</div>' +
+      '</div>' +
+      '<div class="fila-acts">' +
+        (tel ? '<a class="icob" href="https://wa.me/' + waNum + '?text=' + waMsg + '" target="_blank" rel="noopener" title="WhatsApp">💬</a>' : '') +
+        (tel ? '<a class="icob" href="tel:' + tel + '" title="Llamar">📞</a>' : '') +
+        '<button class="btn xs" data-act="toggle" data-idx="' + i + '" type="button">✓ Cobrado</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  // Total general adeudado (todos los deudores, acumulado)
+  const totalGeneral = deudores.reduce((s,{c}) => s + adeudoAcum(c, mesVista).total, 0);
+  cont.innerHTML = '<div class="card alerta"><div class="alerta-tit">⚠️ Deben ' +
+    ' <span class="pill">' + deudores.length + '</span>' +
+    '<span class="tot-adeudo">' + money(totalGeneral) + ' por cobrar</span></div>' + rows + '</div>';
+}
+
+function renderLista(){
+  const cont = $('#lista');
+  if (!cargado){ cont.innerHTML = '<div class="vacio">Cargando…</div>'; return; }
+  if (!clientes.length){
+    cont.innerHTML = '<div class="vacio">Aún no hay clientes.<br>Toca el botón ＋ para agregar el primero.</div>';
+    return;
+  }
+  let items = clientes.map((c,i) => ({ c, i, st: estadoDe(c, mesVista) }));
+  if (comunidad === '__sin__') items = items.filter(({c}) => !dirDe(c).trim());
+  else if (comunidad)          items = items.filter(({c}) => dirDe(c).trim() === comunidad);
+  if (filtro === 'pagados') items = items.filter(x => x.st === 'pagado');
+  if (filtro === 'deben')   items = items.filter(x => x.st !== 'pagado');
+  if (q) items = items.filter(({c}) =>
+    (nombreDe(c) + ' ' + dirDe(c) + ' ' + planDe(c)).toLowerCase().includes(q));
+  const orden = { vencido:0, gracia:1, pendiente:2, pagado:3 };
+  items.sort((a,b) => orden[a.st] - orden[b.st] || nombreDe(a.c).localeCompare(nombreDe(b.c), 'es'));
+  if (!items.length){
+    cont.innerHTML = comunidad && comunidad !== '__sin__' && !q && filtro === 'todos'
+      ? '<div class="vacio">Aún no hay clientes en <b>' + esc(comunidad) + '</b>.<br>Toca el botón ＋ para agregar el primero.</div>'
+      : '<div class="vacio">Nada por aquí con ese filtro 🔍</div>';
+    return;
+  }
+  cont.innerHTML = items.map(({c,i,st}) => {
+    const pagado = st === 'pagado';
+    const dir = dirDe(c), plan = planDe(c);
+    const meta = [plan, dir, '📅 paga el ' + (c.diaPago ?? '—')].filter(Boolean).map(esc).join(' · ');
+
+    // Meses atrasados ANTERIORES al mes que estás viendo (arrastre viejo).
+    // Se muestra siempre, aunque el mes actual ya esté pagado.
+    const ad = adeudoAcum(c, mesVista);
+    const atrasoViejo = ad.meses.filter(m => m.key < keyDe(mesVista));
+    let notaAtraso = '';
+    if (atrasoViejo.length){
+      const montoViejo = atrasoViejo.length * montoDe(c);
+      const lista = atrasoViejo.map(m => m.etiqueta).join(', ');
+      notaAtraso = '<div class="cli-deuda">⏳ Arrastra <b>' + atrasoViejo.length +
+        (atrasoViejo.length === 1 ? ' mes' : ' meses') + '</b> atrasado' +
+        (atrasoViejo.length === 1 ? '' : 's') + ': ' + esc(lista) +
+        ' · <b>' + money(montoViejo) + '</b></div>';
+    }
+
+    const acciones = pagado
+      ? '<button class="btn ghost" data-act="toggle" data-idx="' + i + '" type="button">↺ Quitar</button>' +
+        '<button class="btn" data-act="recibo" data-idx="' + i + '" type="button">🧾 Recibo</button>' +
+        '<button class="btn ghost" data-act="edit" data-idx="' + i + '" type="button">✎ Editar</button>'
+      : '<button class="btn" data-act="toggle" data-idx="' + i + '" type="button">✓ Marcar pagado</button>' +
+        '<button class="btn ghost" data-act="edit" data-idx="' + i + '" type="button">✎ Editar</button>';
+    return '<div class="card cliente' + (atrasoViejo.length ? ' con-deuda' : '') + '">' +
+      '<div class="cli-top">' +
+        '<div>' +
+          '<div class="cli-nom">' + esc(nombreDe(c)) + '</div>' +
+          '<div class="cli-meta">' + meta + '</div>' +
+        '</div>' +
+        '<div class="cli-right">' +
+          '<div class="cli-monto">' + money(montoDe(c)) + '</div>' +
+          '<span class="chip ' + st + '">' + ETIQ[st] + '</span>' +
+        '</div>' +
+      '</div>' +
+      notaAtraso +
+      '<div class="cli-acts">' + acciones + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// ---------- modal cliente ----------
+function abrirModal(i){
+  editIdx = i;
+  const c = i >= 0 ? clientes[i] : {};
+  $('#mTitulo').textContent = i >= 0 ? 'Editar cliente' : 'Nuevo cliente';
+  $('#mSub').textContent = i >= 0 ? ('Recibos emitidos: ' + (c.folioCliente || 0)) : '';
+  $('#fNombre').value  = c.nombre || '';
+  $('#fTel').value     = telDe(c);
+  $('#fMonto').value   = i >= 0 ? (montoDe(c) || '') : 350;
+  $('#fPlan').value    = i >= 0 ? planDe(c) : '10 M';
+  $('#fDir').value     = dirDe(c);
+  $('#fDiaPago').value = i >= 0 ? (c.diaPago ?? '') : 20;
+  $('#fCorte').value   = i >= 0 ? (c.corteDias ?? '') : 5;
+  $('#fNotas').value   = c.notas || '';
+  $('#histSec').hidden = i < 0;
+  $('#btnDel').hidden  = i < 0;
+  histYear = mesVista.getFullYear();
+  renderHist();
+  $('#modalBg').hidden = false;
+  document.body.classList.add('noscroll');
+}
+function cerrarModal(){
+  $('#modalBg').hidden = true;
+  document.body.classList.remove('noscroll');
+  editIdx = -1;
+}
+function renderHist(){
+  if (editIdx < 0) return;
+  $('#histYear').textContent = histYear;
+  const hp = hpDe(clientes[editIdx] || {});
+  $('#histGrid').innerHTML = MESES.map((m, mi) => {
+    const key = histYear + '-' + String(mi+1).padStart(2,'0');
+    return '<button type="button" class="mesb ' + (hp[key] ? 'on' : '') + '" data-key="' + key + '">' + m + '</button>';
+  }).join('');
+}
+function guardarCliente(){
+  const nombre = $('#fNombre').value.trim();
+  if (!nombre){ toast('Ponle nombre al cliente', 'warn'); return; }
+  const num = id => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : null; };
+  const c = {
+    nombre,
+    telefono:  $('#fTel').value.trim(),
+    direccion: $('#fDir').value.trim(),
+    plan:      $('#fPlan').value.trim(),
+    monto:     num('#fMonto'),
+    diaPago:   num('#fDiaPago'),
+    corteDias: num('#fCorte'),
+    notas:     $('#fNotas').value.trim()
+  };
+  let arr;
+  if (editIdx >= 0){
+    arr = clientes.map((x,i) => i === editIdx ? { ...x, ...c } : x);
+  } else {
+    c.id = nuevoId();
+    c.historialPagos = {};
+    c.folioCliente = 0;
+    arr = [...clientes, c];
+  }
+  cerrarModal();
+  guardar(arr);
+}
+
+// ---------- recibos (mismo formato que tu app anterior) ----------
+function armarTicket(ctx, metodo){
+  const c = ctx.c;
+  const nombreMes = MESES_LARGOS[ctx.mes.getMonth()];
+  const anio = ctx.mes.getFullYear();
+  const periodo = nombreMes + ' ' + anio;
+  const fechaMensualidad = c.diaPago ? (c.diaPago + ' de ' + nombreMes + ' ' + anio) : periodo;
+  const monto = montoDe(c).toFixed(2);
+  return (
+'----------------------------------------\n' +
+'              NETWORTSML\n' +
+'       "Sin WiFi no hay Paraiso"\n' +
+'----------------------------------------\n' +
+'              RECIBO DE PAGO\n' +
+'\n' +
+'Folio global: ' + ctx.folioGlobal + '\n' +
+'Folio cliente: ' + ctx.folioClienteStr + '\n' +
+'\n' +
+'Fecha de pago: ' + ctx.fecha + ' ' + ctx.hora + '\n' +
+'\n' +
+'Cliente: ' + nombreDe(c) + '\n' +
+'Servicio: Internet\n' +
+'Periodo: ' + periodo + '\n' +
+'Fecha de mensualidad: ' + fechaMensualidad + '\n' +
+'\n' +
+'Monto pagado: $' + monto + ' MXN\n' +
+'Método de pago: ' + metodo + '\n' +
+'\n' +
+'Atendido por: ' + ATENDIDO_POR + '\n' +
+'----------------------------------------\n' +
+'Tel. soporte WhatsApp: ' + TEL_SOPORTE + '\n' +
+'\n' +
+'GRACIAS POR SU PAGO\n' +
+'----------------------------------------');
+}
+
+function abrirRecibo(i){
+  const c = clientes[i]; if (!c) return;
+  const key = keyDe(mesVista);
+  if (!hpDe(c)[key]){ toast('Primero marca el mes como pagado', 'warn'); return; }
 
   const hoy = new Date();
-  const añoDef = hoy.getFullYear();
-  const mesDef = MESES_LARGOS[hoy.getMonth()];
-
-  const mes = prompt("Mes pagado (Ej. Diciembre)", mesDef);
-  if (!mes) return;
-
-  const anioStr = prompt("Año pagado (Ej. 2025)", añoDef);
-  if (!anioStr) return;
-  const anio = parseInt(anioStr, 10);
-  if (isNaN(anio)) {
-    alert("Año no válido.");
-    return;
-  }
-
-  const metodo = prompt("Método de pago (Efectivo, Transferencia, etc.)", "EFECTIVO") || "No especificado";
-  const monto = c.monto != null ? Number(c.monto).toFixed(2) : "0.00";
-
-  const periodo = mes + " " + anioStr;
-  const fechaMensualidad = c.diaPago
-    ? `${c.diaPago} de ${mes} ${anioStr}`
-    : periodo;
-
-  const fechaPago = hoy.toLocaleDateString("es-MX");
-  const horaPago = hoy.toLocaleTimeString("es-MX");
-
-  const folioGlobal = "NET-" +
+  const folioGlobal = 'NET-' +
     hoy.getFullYear().toString() +
-    String(hoy.getMonth()+1).padStart(2,"0") +
-    String(hoy.getDate()).padStart(2,"0") +
-    String(hoy.getHours()).padStart(2,"0") +
-    String(hoy.getMinutes()).padStart(2,"0") +
-    String(hoy.getSeconds()).padStart(2,"0");
+    String(hoy.getMonth()+1).padStart(2,'0') +
+    String(hoy.getDate()).padStart(2,'0') +
+    String(hoy.getHours()).padStart(2,'0') +
+    String(hoy.getMinutes()).padStart(2,'0') +
+    String(hoy.getSeconds()).padStart(2,'0');
 
-  const nuevoFolioCliente = (c.folioCliente || 0) + 1;
-  c.folioCliente = nuevoFolioCliente;
-  clientes[idx] = c;
-  guardarClientes(clientes);
+  const nuevoFolio = (Number(c.folioCliente) || 0) + 1;
+  const cNuevo = { ...c, folioCliente: nuevoFolio };
+  guardar(clientes.map((x,j) => j === i ? cNuevo : x), true);
 
-  const folioClienteStr = String(nuevoFolioCliente).padStart(4,"0");
-
-  const ticket =
-`----------------------------------------
-              NETWORTSML
-       "Sin WiFi no hay Paraiso"
-----------------------------------------
-              RECIBO DE PAGO
-
-Folio global: ${folioGlobal}
-Folio cliente: ${folioClienteStr}
-
-Fecha de pago: ${fechaPago} ${horaPago}
-
-Cliente: ${c.nombre}
-Servicio: Internet
-Periodo: ${periodo}
-Fecha de mensualidad: ${fechaMensualidad}
-
-Monto pagado: $${monto} MXN
-Método de pago: ${metodo}
-
-Atendido por: SAUL
-----------------------------------------
-Tel. soporte WhatsApp: +52-232-147-8390
-
-GRACIAS POR SU PAGO
-----------------------------------------`;
-
-  document.getElementById("reciboTexto").textContent = ticket;
+  reciboCtx = {
+    c: cNuevo,
+    mes: new Date(mesVista),
+    folioGlobal,
+    folioClienteStr: String(nuevoFolio).padStart(4,'0'),
+    fecha: hoy.toLocaleDateString('es-MX'),
+    hora: hoy.toLocaleTimeString('es-MX')
+  };
+  $('#rTitulo').textContent = 'Recibo — ' + nombreDe(c);
+  $('#rSub').textContent = MESES_LARGOS[mesVista.getMonth()] + ' ' + mesVista.getFullYear() + ' · folio ' + reciboCtx.folioClienteStr;
+  $('#rMetodo').value = 'EFECTIVO';
+  $('#rTexto').textContent = armarTicket(reciboCtx, 'EFECTIVO');
+  $('#reciboBg').hidden = false;
+  document.body.classList.add('noscroll');
 }
-
-function generarReciboClienteMes(idCliente, anio, mesNum) {
-  let clientes = cargarClientes();
-  const idx = clientes.findIndex(x => x.id === idCliente);
-  if (idx === -1) {
-    alert("Cliente no encontrado.");
-    return;
-  }
-  const c = clientes[idx];
-
-  const key = `${anio}-${mesNum}`;
-  if (!c.historialPagos[key]) {
-    alert("Este mes está PENDIENTE. No se puede generar recibo.");
-    return;
-  }
-
-  const mesIndex = parseInt(mesNum, 10) - 1;
-  const nombreMes = MESES_LARGOS[mesIndex] || mesNum;
-
-  const metodo = prompt("Método de pago (Efectivo, Transferencia, etc.)", "EFECTIVO") || "No especificado";
-  const monto = c.monto != null ? Number(c.monto).toFixed(2) : "0.00";
-
-  const hoy = new Date();
-  const fechaPago = hoy.toLocaleDateString("es-MX");
-  const horaPago = hoy.toLocaleTimeString("es-MX");
-
-  const folioGlobal = "NET-" +
-    hoy.getFullYear().toString() +
-    String(hoy.getMonth()+1).padStart(2,"0") +
-    String(hoy.getDate()).padStart(2,"0") +
-    String(hoy.getHours()).padStart(2,"0") +
-    String(hoy.getMinutes()).padStart(2,"0") +
-    String(hoy.getSeconds()).padStart(2,"0");
-
-  const nuevoFolioCliente = (c.folioCliente || 0) + 1;
-  c.folioCliente = nuevoFolioCliente;
-  clientes[idx] = c;
-  guardarClientes(clientes);
-
-  const folioClienteStr = String(nuevoFolioCliente).padStart(4,"0");
-
-  const periodo = `${nombreMes} ${anio}`;
-  const fechaMensualidad = c.diaPago
-    ? `${c.diaPago} de ${nombreMes} ${anio}`
-    : periodo;
-
-  const ticket =
-`----------------------------------------
-              NETWORTSML
-       "Sin WiFi no hay Paraiso"
-----------------------------------------
-              RECIBO DE PAGO
-
-Folio global: ${folioGlobal}
-Folio cliente: ${folioClienteStr}
-
-Fecha de pago: ${fechaPago} ${horaPago}
-
-Cliente: ${c.nombre}
-Servicio: Internet
-Periodo: ${periodo}
-Fecha de mensualidad: ${fechaMensualidad}
-
-Monto pagado: $${monto} MXN
-Método de pago: ${metodo}
-
-Atendido por: SAUL
-----------------------------------------
-Tel. soporte WhatsApp: +52-232-147-8390
-
-GRACIAS POR SU PAGO
-----------------------------------------`;
-
-  document.getElementById("reciboTexto").textContent = ticket;
-  cerrarModalMeses();
+function cerrarRecibo(){
+  $('#reciboBg').hidden = true;
+  document.body.classList.remove('noscroll');
+  reciboCtx = null;
 }
-
-/* Copiar texto del recibo */
-function copiarRecibo() {
-  const texto = document.getElementById("reciboTexto").textContent || "";
-  if (!texto.trim()) {
-    alert("Primero genera un comprobante con el botón 'Recibo'.");
-    return;
+function copiarRecibo(){
+  const texto = $('#rTexto').textContent || '';
+  if (!texto.trim()) return;
+  const listo = () => toast('Recibo copiado ✓');
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(texto).then(listo).catch(() => copiarViejito(texto, listo));
+  } else {
+    copiarViejito(texto, listo);
   }
-  const area = document.createElement("textarea");
+}
+function copiarViejito(texto, cb){
+  const area = document.createElement('textarea');
   area.value = texto;
   document.body.appendChild(area);
   area.select();
-  document.execCommand("copy");
+  document.execCommand('copy');
   document.body.removeChild(area);
-  alert("Recibo copiado. Pégalo en WhatsApp o donde quieras.");
+  cb();
 }
-
-/* PDF / WHATSAPP */
-async function generarPDF() {
-  const texto = document.getElementById("reciboTexto").textContent || "";
-  if (!texto.trim()) {
-    alert("Primero genera un comprobante con el botón 'Recibo'.");
-    return;
-  }
-
+async function generarPDF(){
+  const texto = $('#rTexto').textContent || '';
+  if (!texto.trim()) return;
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: "pt", format: "a4" });
-
-  const margin = 40;
-  const maxWidth = 520;
-  const lineHeight = 14;
-
-  doc.setFont("courier", "normal");
+  const doc = new jsPDF({ unit:'pt', format:'a4' });
+  const margin = 40, maxWidth = 520, lineHeight = 14;
+  doc.setFont('courier','normal');
   doc.setFontSize(10);
-
   const lines = doc.splitTextToSize(texto, maxWidth);
-  lines.forEach((line, index) => {
-    doc.text(line, margin, margin + lineHeight * index);
-  });
-
-  const filename = "recibo_networtsml.pdf";
-
+  lines.forEach((line, index) => doc.text(line, margin, margin + lineHeight * index));
+  const filename = 'recibo_networtsml.pdf';
   try {
-    const pdfBlob = doc.output("blob");
-    const file = new File([pdfBlob], filename, { type: "application/pdf" });
-
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({
-        files: [file],
-        title: "Recibo de pago NetwortsML",
-        text: "Comprobante de pago"
-      });
+    const pdfBlob = doc.output('blob');
+    const file = new File([pdfBlob], filename, { type:'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files:[file] })){
+      await navigator.share({ files:[file], title:'Recibo de pago NetwortsML', text:'Comprobante de pago' });
       return;
     }
-  } catch(e) {}
-
+  } catch(e){}
   doc.save(filename);
-  alert("PDF generado. Desde Descargas lo puedes mandar por WhatsApp.");
+  toast('PDF descargado. Mándalo por WhatsApp desde Descargas.');
 }
 
-/* ========= REPORTE MENSUAL ========= */
-
-function initSelectReporteMensual() {
-  const selMes = document.getElementById("reporte-mes");
-  const selAnio = document.getElementById("reporte-mes-anio");
-  if (!selMes || !selAnio) return;
-
+// ---------- respaldo ----------
+function exportarRespaldo(){
+  const data = JSON.stringify(clientes);
+  const blob = new Blob([data], { type:'application/json' });
   const hoy = new Date();
-  const mesActual = hoy.getMonth();
-  const añoActual = hoy.getFullYear();
-
-  selMes.innerHTML = "";
-  MESES_LARGOS.forEach((m, i) => {
-    const op = document.createElement("option");
-    op.value = String(i+1).padStart(2,"0");
-    op.textContent = m;
-    if (i === mesActual) op.selected = true;
-    selMes.appendChild(op);
-  });
-
-  const clientes = cargarClientes();
-  const años = obtenerAniosDeHistorial(clientes);
-
-  selAnio.innerHTML = "";
-  años.forEach(a => {
-    const op = document.createElement("option");
-    op.value = a;
-    op.textContent = a;
-    if (a === añoActual) op.selected = true;
-    selAnio.appendChild(op);
-  });
-}
-
-function renderReporteMensual() {
-  const selMes = document.getElementById("reporte-mes");
-  const selAnio = document.getElementById("reporte-mes-anio");
-  const tbody = document.getElementById("reporte-mensual-body");
-  const resumen = document.getElementById("reporte-mensual-resumen");
-
-  if (!selMes || !selAnio || !tbody || !resumen) return;
-
-  const mesNum = selMes.value;
-  const anio = Number(selAnio.value);
-  tbody.innerHTML = "";
-
-  let clientes = cargarClientes();
-  if (clientes.length === 0 || !anio || !mesNum) {
-    resumen.textContent = "Sin datos para mostrar.";
-    return;
-  }
-
-  const key = `${anio}-${mesNum}`;
-  let total = 0;
-  let pagados = 0;
-  let pendientes = 0;
-
-  clientes.sort((a,b)=> (a.nombre||"").localeCompare(b.nombre||"","es"));
-
-  for (const c of clientes) {
-    const pagado = !!c.historialPagos[key];
-    const monto = c.monto ? Number(c.monto) : 0;
-    if (pagado) {
-      total += monto;
-      pagados++;
-    } else {
-      pendientes++;
-    }
-
-    const tr = document.createElement("tr");
-
-    const tdCliente = document.createElement("td");
-    tdCliente.textContent = c.nombre || "";
-
-    const tdMonto = document.createElement("td");
-    tdMonto.textContent = monto ? "$"+monto.toFixed(2) : "-";
-
-    const tdEstado = document.createElement("td");
-    tdEstado.innerHTML = pagado
-      ? '<span class="badge badge-ok">PAGADO</span>'
-      : '<span class="badge badge-pendiente">PENDIENTE</span>';
-
-    tr.appendChild(tdCliente);
-    tr.appendChild(tdMonto);
-    tr.appendChild(tdEstado);
-
-    tbody.appendChild(tr);
-  }
-
-  const nombreMes = MESES_LARGOS[parseInt(mesNum,10)-1] || mesNum;
-  resumen.textContent =
-    `Mes: ${nombreMes} ${anio} — Pagados: ${pagados} · Pendientes: ${pendientes} · Total cobrado: $${total.toFixed(2)} MXN`;
-}
-
-/* ========= RESPALDO LOCAL (EXPORTAR / IMPORTAR) ========= */
-
-function exportarRespaldo() {
-  const data = localStorage.getItem(STORAGE_KEY) || "[]";
-  const blob = new Blob([data], { type: "application/json" });
-
-  const hoy = new Date();
-  const fechaStr =
-    hoy.getFullYear().toString() +
-    String(hoy.getMonth()+1).padStart(2,"0") +
-    String(hoy.getDate()).padStart(2,"0") +
-    "_" +
-    String(hoy.getHours()).padStart(2,"0") +
-    String(hoy.getMinutes()).padStart(2,"0");
-
-  const filename = `respaldo_networtsml_${fechaStr}.json`;
-
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
+  const fechaStr = hoy.getFullYear().toString() +
+    String(hoy.getMonth()+1).padStart(2,'0') +
+    String(hoy.getDate()).padStart(2,'0') + '_' +
+    String(hoy.getHours()).padStart(2,'0') +
+    String(hoy.getMinutes()).padStart(2,'0');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'respaldo_networtsml_' + fechaStr + '.json';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
-  alert("Respaldo exportado. Guarda el archivo en tu nube o USB.");
+  URL.revokeObjectURL(a.href);
+  toast('Respaldo exportado ✓');
 }
-
-function importarRespaldo() {
-  const input = document.getElementById("importar-archivo");
-  if (!input || !input.files || !input.files[0]) {
-    alert("Selecciona primero un archivo .json de respaldo.");
-    return;
-  }
-
-  const file = input.files[0];
+function importarRespaldo(archivo){
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = e => {
     try {
-      const contenido = e.target.result;
-      const datos = JSON.parse(contenido);
-      if (!Array.isArray(datos)) {
-        alert("Archivo inválido. Debe ser un arreglo de clientes.");
-        return;
-      }
+      const datos = JSON.parse(e.target.result);
+      if (!Array.isArray(datos)){ toast('Archivo inválido', 'bad'); return; }
+      if (!confirm('Se reemplazará todo con ' + datos.length + ' clientes del respaldo. ¿Continuar?')) return;
       const normalizados = datos.map(c => ({
-        historialPagos: {},
-        folioCliente: c.folioCliente || 0,
         ...c,
-        historialPagos: c.historialPagos || {}
+        id: c.id || nuevoId(),
+        folioCliente: Number(c.folioCliente) || 0,
+        historialPagos: (c.historialPagos && typeof c.historialPagos === 'object') ? c.historialPagos : {}
       }));
-
-      guardarClientes(normalizados);
-      renderTablaClientes();
-      renderReporteMensual();
-      alert("Respaldo importado correctamente.");
-    } catch(err) {
+      guardar(normalizados);
+    } catch(err){
       console.error(err);
-      alert("Error al leer el respaldo. Verifica que sea el archivo correcto.");
+      toast('No pude leer el respaldo', 'bad');
     }
   };
-  reader.readAsText(file, "utf-8");
+  reader.readAsText(archivo, 'utf-8');
 }
 
-/* ========= SINCRONIZACIÓN CON FIRESTORE ========= */
-
-function subirANube() {
-  if (!auth.currentUser) {
-    console.warn("No hay sesión activa, no se sube a la nube.");
-    return;
-  }
-  const data = localStorage.getItem(STORAGE_KEY) || "[]";
+// ---------- sesión ----------
+function mapaErrorAuth(code){
+  if (code === 'auth/invalid-email') return 'Correo no válido.';
+  if (code === 'auth/user-not-found') return 'Usuario no encontrado.';
+  if (code === 'auth/wrong-password') return 'Contraseña incorrecta.';
+  if (code === 'auth/invalid-credential') return 'Correo o contraseña incorrectos.';
+  if (code === 'auth/too-many-requests') return 'Demasiados intentos. Espera unos minutos.';
+  if (code === 'auth/network-request-failed') return 'Sin conexión a internet.';
+  return 'Error al iniciar sesión.';
+}
+async function login(){
+  const email = $('#lEmail').value.trim();
+  const pass = $('#lPass').value;
+  const err = $('#lError');
+  err.textContent = '';
+  if (!email || !pass){ err.textContent = 'Ingresa correo y contraseña.'; return; }
+  const b = $('#btnLogin');
+  b.disabled = true; b.textContent = 'Entrando…';
   try {
-    const parsed = JSON.parse(data);
-    return nubeDocRef.set({
-      data: parsed,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-  } catch(e) {
-    console.error("Error al subir a nube:", e);
-    alert("No se pudo subir a la nube (JSON inválido).");
-  }
-}
-
-function escucharNube() {
-  nubeDocRef.onSnapshot((doc) => {
-    if (!doc.exists) return;
-    const payload = doc.data();
-    if (!payload || !Array.isArray(payload.data)) return;
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload.data));
-    renderTablaClientes(document.getElementById("buscador") ? document.getElementById("buscador").value : "");
-    renderReporteMensual();
-  }, (error) => {
-    console.error("Error escuchando nube:", error);
-  });
-}
-
-/* ========= TOGGLE OPCIONES AVANZADAS ========= */
-
-function toggleAvanzado() {
-  const seccion = document.getElementById("seccion-avanzado");
-  const btn = document.getElementById("btn-avanzado");
-  if (!seccion || !btn) return;
-
-  if (seccion.style.display === "none" || seccion.style.display === "") {
-    seccion.style.display = "block";
-    btn.innerHTML = "⚙️ Ocultar opciones avanzadas";
-  } else {
-    seccion.style.display = "none";
-    btn.innerHTML = "⚙️ Opciones avanzadas";
-  }
-}
-
-/* ========= LOGIN CON FIREBASE AUTH ========= */
-
-function actualizarUIporSesion(user) {
-  const loginScreen = document.getElementById("login-screen");
-  const lbl = document.getElementById("usuario-label");
-  const btn = document.getElementById("logout-btn");
-
-  if (user) {
-    if (loginScreen) loginScreen.style.display = "none";
-    if (lbl) lbl.textContent = "Usuario: " + (user.email || "");
-    if (btn) btn.style.display = "inline-flex";
-  } else {
-    if (loginScreen) loginScreen.style.display = "flex";
-    if (lbl) lbl.textContent = "";
-    if (btn) btn.style.display = "none";
-  }
-}
-
-async function login() {
-  const email = document.getElementById("login-email").value.trim();
-  const password = document.getElementById("login-password").value;
-  const errorLabel = document.getElementById("login-error");
-  const btnLogin = document.getElementById("login-btn");
-
-  errorLabel.textContent = "";
-
-  if (!email || !password) {
-    errorLabel.textContent = "Ingresa correo y contraseña.";
-    return;
-  }
-
-  btnLogin.disabled = true;
-  btnLogin.textContent = "Entrando...";
-
-  try {
-    await auth.signInWithEmailAndPassword(email, password);
-    // El onAuthStateChanged se encarga del resto
-  } catch (e) {
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch(e){
     console.error(e);
-    let msg = "Error al iniciar sesión.";
-    if (e.code === "auth/invalid-email") msg = "Correo no válido.";
-    else if (e.code === "auth/user-not-found") msg = "Usuario no encontrado.";
-    else if (e.code === "auth/wrong-password") msg = "Contraseña incorrecta.";
-    else if (e.code === "auth/invalid-credential") msg = "Correo o contraseña incorrectos.";
-    else if (e.code === "auth/too-many-requests") msg = "Demasiados intentos. Espera unos minutos.";
-    else if (e.code === "auth/network-request-failed") msg = "Sin conexión a internet.";
-    errorLabel.textContent = msg;
+    err.textContent = mapaErrorAuth(e.code);
   } finally {
-    btnLogin.disabled = false;
-    btnLogin.textContent = "Entrar al sistema";
+    b.disabled = false; b.textContent = 'Entrar al sistema';
   }
 }
 
-async function logout() {
-  try {
-    await auth.signOut();
-    // Limpiamos datos locales por seguridad
-    localStorage.removeItem(STORAGE_KEY);
-  } catch(e) {
-    console.error(e);
-    alert("Error al cerrar sesión.");
+// ---------- eventos ----------
+$('#mesPrev').addEventListener('click', () => { mesVista = new Date(mesVista.getFullYear(), mesVista.getMonth()-1, 1); render(); });
+$('#mesNext').addEventListener('click', () => { mesVista = new Date(mesVista.getFullYear(), mesVista.getMonth()+1, 1); render(); });
+
+$('#buscar').addEventListener('input', e => { q = e.target.value.trim().toLowerCase(); renderLista(); });
+$('#filtroComunidad').addEventListener('change', e => { comunidad = e.target.value; renderStats(); renderAlertas(); renderLista(); });
+$('#btnGestComunidades').addEventListener('click', abrirGestComunidades);
+$('#btnComCerrar').addEventListener('click', cerrarGestComunidades);
+$('#comModalBg').addEventListener('click', e => { if (e.target === e.currentTarget) cerrarGestComunidades(); });
+$('#comLista').addEventListener('click', e => {
+  const b = e.target.closest('[data-com]'); if (!b) return;
+  eliminarComunidad(b.dataset.com);
+});
+$('#btnAddComunidad').addEventListener('click', async () => {
+  const nombre = prompt('Nombre de la nueva comunidad:');
+  if (nombre === null) return;
+  const limpio = nombre.trim();
+  if (!limpio){ toast('Escribe un nombre', 'bad'); return; }
+  const yaExiste = [...comunidadesGuardadas, ...clientes.map(c => dirDe(c).trim())]
+    .some(n => n.toLowerCase() === limpio.toLowerCase());
+  if (yaExiste){
+    toast('Esa comunidad ya existe', 'bad');
+    comunidad = limpio;
+    renderComunidades(); renderStats(); renderAlertas(); renderLista();
+    return;
   }
+  await guardarComunidades([...comunidadesGuardadas, limpio]);
+  comunidad = limpio;
+  renderComunidades(); renderStats(); renderAlertas(); renderLista();
+  toast('Comunidad agregada ✓');
+});
+document.querySelectorAll('.fchip').forEach(ch => ch.addEventListener('click', () => {
+  filtro = ch.dataset.f;
+  document.querySelectorAll('.fchip').forEach(x => x.classList.toggle('on', x === ch));
+  renderLista();
+}));
+
+function clickAccion(e){
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const i = +b.dataset.idx;
+  if (b.dataset.act === 'toggle') togglePago(i, keyDe(mesVista));
+  if (b.dataset.act === 'edit')   abrirModal(i);
+  if (b.dataset.act === 'recibo') abrirRecibo(i);
+}
+$('#lista').addEventListener('click', clickAccion);
+$('#alertas').addEventListener('click', clickAccion);
+
+$('#fab').addEventListener('click', () => abrirModal(-1));
+$('#btnCancel').addEventListener('click', cerrarModal);
+$('#btnSave').addEventListener('click', guardarCliente);
+$('#modalBg').addEventListener('click', e => { if (e.target === e.currentTarget) cerrarModal(); });
+$('#histPrev').addEventListener('click', () => { histYear--; renderHist(); });
+$('#histNext').addEventListener('click', () => { histYear++; renderHist(); });
+$('#histGrid').addEventListener('click', e => {
+  const b = e.target.closest('.mesb'); if (!b || editIdx < 0) return;
+  togglePago(editIdx, b.dataset.key);
+});
+$('#btnDel').addEventListener('click', () => {
+  if (editIdx < 0) return;
+  const c = clientes[editIdx];
+  if (!confirm('¿Borrar a ' + nombreDe(c) + '? También se borra su historial de pagos.')) return;
+  const arr = clientes.filter((_, j) => j !== editIdx);
+  cerrarModal();
+  guardar(arr);
+});
+
+$('#rCerrar').addEventListener('click', cerrarRecibo);
+$('#reciboBg').addEventListener('click', e => { if (e.target === e.currentTarget) cerrarRecibo(); });
+$('#rMetodo').addEventListener('change', () => {
+  if (reciboCtx) $('#rTexto').textContent = armarTicket(reciboCtx, $('#rMetodo').value);
+});
+$('#rCopiar').addEventListener('click', copiarRecibo);
+$('#rPDF').addEventListener('click', generarPDF);
+
+$('#btnLogin').addEventListener('click', login);
+$('#lPass').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); login(); } });
+$('#lEmail').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); $('#lPass').focus(); } });
+$('#btnSalir').addEventListener('click', async () => {
+  try { await auth.signOut(); } catch(e){ console.error(e); }
+});
+
+$('#btnExp').addEventListener('click', exportarRespaldo);
+$('#btnImp').addEventListener('click', () => $('#impFile').click());
+$('#impFile').addEventListener('change', e => {
+  if (e.target.files && e.target.files[0]) importarRespaldo(e.target.files[0]);
+  e.target.value = '';
+});
+
+// ---------- toast ----------
+let toastT;
+function toast(msg, tipo){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'show' + (tipo ? ' ' + tipo : '');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.className = '', 2200);
 }
 
-// Permitir entrar con Enter en el campo de contraseña
-document.getElementById("login-password").addEventListener("keydown", function(e) {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    login();
+// ---------- arranque ----------
+(function(){
+  const s = $('#senal');
+  for (let i = 0; i < 14; i++){
+    const b = document.createElement('span');
+    b.style.height = (28 + i * 5) + '%';
+    s.appendChild(b);
   }
-});
 
-document.getElementById("login-email").addEventListener("keydown", function(e) {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    document.getElementById("login-password").focus();
-  }
-});
+  firebase.initializeApp(firebaseConfig);
+  auth = firebase.auth();
+  db = firebase.firestore();
+  try { db.enablePersistence({ synchronizeTabs:true }).catch(()=>{}); } catch(e){}
 
-/* ========= INICIO ========= */
-
-// Detectar cambios de sesión (login/logout)
-auth.onAuthStateChanged((user) => {
-  actualizarUIporSesion(user);
-
-  if (user) {
-    // Si entró, cargar todo y empezar a escuchar la nube
-    if (!appInicializada) {
-      renderTablaClientes();
-      initSelectReporteMensual();
-      escucharNube();
-      appInicializada = true;
+  auth.onAuthStateChanged(user => {
+    if (user){
+      $('#loginBg').hidden = true;
+      $('#uEmail').textContent = user.email || '';
+      $('#lEmail').value = ''; $('#lPass').value = ''; $('#lError').textContent = '';
+      empezarEscucha();
     } else {
-      renderTablaClientes();
-      escucharNube();
+      $('#loginBg').hidden = false;
+      $('#uEmail').textContent = '—';
+      if (unsub){ unsub(); unsub = null; }
+      clientes = []; cargado = false;
+      render();
     }
-    // Limpiar campos de login por seguridad
-    document.getElementById("login-email").value = "";
-    document.getElementById("login-password").value = "";
-    document.getElementById("login-error").textContent = "";
-  } else {
-    // Si salió, mostrar login
-    appInicializada = false;
-  }
-});
+  });
+})();
 </script>
-
 </body>
 </html>
