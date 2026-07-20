@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Importar clientes · NetWorTSML</title>
+<style>
+  body{font-family:system-ui,sans-serif;background:#0b1220;color:#e5edf7;margin:0;
+    display:flex;justify-content:center;padding:24px 16px;}
+  .card{background:#111b2e;border:1px solid #1f2c44;border-radius:16px;
+    max-width:440px;width:100%;padding:22px;}
+  h1{font-size:1.15rem;margin:0 0 4px;}
+  p{color:#93a4bd;font-size:.88rem;line-height:1.45;}
+  input{width:100%;box-sizing:border-box;background:#0b1424;border:1px solid #22304b;
+    color:#e5edf7;border-radius:10px;padding:12px;margin:6px 0;font-size:1rem;}
+  button{width:100%;background:#38bdf8;color:#04121f;border:none;border-radius:10px;
+    padding:13px;font-weight:700;font-size:1rem;margin-top:10px;cursor:pointer;}
+  button:disabled{opacity:.5}
+  .log{background:#0b1424;border:1px solid #22304b;border-radius:10px;padding:12px;
+    font-size:.82rem;margin-top:14px;white-space:pre-wrap;max-height:280px;overflow:auto;}
+  .ok{color:#4ade80}.err{color:#f87171}.warn{color:#fbbf24}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Importar 49 clientes</h1>
+  <p>Entra con tu correo de siempre y toca el botón. Los clientes del Excel se agregan a tu base.
+  Si un nombre ya existe, se salta (no se duplica). Puedes abrir esto solo una vez y borrarlo después.</p>
+  <div id="loginBox">
+    <input id="email" type="email" placeholder="Correo" autocomplete="email">
+    <input id="pass" type="password" placeholder="Contraseña" autocomplete="current-password">
+    <button id="btnLogin">Entrar</button>
+  </div>
+  <div id="importBox" hidden>
+    <button id="btnImport">Importar clientes al sistema</button>
+  </div>
+  <div class="log" id="log">Esperando…</div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCSJJa_7QOgRzo0waEa-tUsHHWd_QAdFz8",
+  authDomain: "networtsml-pro.firebaseapp.com",
+  projectId: "networtsml-pro",
+  storageBucket: "networtsml-pro.firebasestorage.app",
+  messagingSenderId: "244577304776",
+  appId: "1:244577304776:web:ec92da03925406217e65fd"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const DOC = () => db.collection('networtsml').doc('clientes');
+
+const LISTA = [{"nombre": "Owen Muñoz", "diaPago": 25}, {"nombre": "Don Jorgue", "diaPago": 8}, {"nombre": "Carlos Sabino", "diaPago": 20}, {"nombre": "Doña Toña", "diaPago": 1}, {"nombre": "Alex", "diaPago": 29}, {"nombre": "Chavita", "diaPago": 1}, {"nombre": "Marlen", "diaPago": 12}, {"nombre": "Jazmin", "diaPago": 28}, {"nombre": "Rochi", "diaPago": 30}, {"nombre": "Esteban", "diaPago": 1}, {"nombre": "Pepe", "diaPago": 5}, {"nombre": "Manis", "diaPago": 1}, {"nombre": "Don Genaro", "diaPago": 10}, {"nombre": "Chucho Tellez", "diaPago": 23}, {"nombre": "Cesar Mendez", "diaPago": 19}, {"nombre": "Gustavo", "diaPago": 9}, {"nombre": "Yoni", "diaPago": 9}, {"nombre": "Parna Santos", "diaPago": 18}, {"nombre": "Lucero Reyes", "diaPago": 15}, {"nombre": "Sixto Muñoz", "diaPago": 25}, {"nombre": "Doña Carla", "diaPago": 1}, {"nombre": "Pancho Venancio", "diaPago": 3}, {"nombre": "Don Reinaldo", "diaPago": 7}, {"nombre": "Carlos Rb", "diaPago": 16}, {"nombre": "Primaria", "diaPago": 4}, {"nombre": "Doña Yola", "diaPago": 24}, {"nombre": "Señora De Chava", "diaPago": 1}, {"nombre": "Moyo", "diaPago": 1}, {"nombre": "Alvaro", "diaPago": 20}, {"nombre": "Martin Romero", "diaPago": 12}, {"nombre": "Don Chovis", "diaPago": 9}, {"nombre": "Evelin Ramirez", "diaPago": 5}, {"nombre": "Pedro Libreros", "diaPago": 5}, {"nombre": "Paula Colonia", "diaPago": 7}, {"nombre": "Alan Reyez", "diaPago": 1}, {"nombre": "Rosi Cruz", "diaPago": 14}, {"nombre": "Carlos Colonia", "diaPago": 15}, {"nombre": "Fredy Libreros", "diaPago": 16}, {"nombre": "Pakito Gregorio", "diaPago": 15}, {"nombre": "Ahuet Libreros", "diaPago": 17}, {"nombre": "Caleb Lopez", "diaPago": 20}, {"nombre": "Alan Emir", "diaPago": 15}, {"nombre": "Frank Ramirez", "diaPago": 23}, {"nombre": "Pati Romero", "diaPago": 28}, {"nombre": "David Ramirez", "diaPago": 25}, {"nombre": "Eduardo Alexis", "diaPago": 4}, {"nombre": "Wicho Moguel", "diaPago": 5}, {"nombre": "Brayan Medina", "diaPago": 5}, {"nombre": "Señora Coapal", "diaPago": 9}];
+
+const $ = s => document.querySelector(s);
+const log = (msg, cls) => {
+  const el = $('#log');
+  el.innerHTML += '\n' + (cls ? '<span class="'+cls+'">'+msg+'</span>' : msg);
+  el.scrollTop = el.scrollHeight;
+};
+const norm = s => String(s||'').trim().toLowerCase()
+  .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const nuevoId = () => (crypto.randomUUID ? crypto.randomUUID()
+  : 'c' + Date.now() + Math.random().toString(16).slice(2));
+
+$('#btnLogin').onclick = async () => {
+  $('#btnLogin').disabled = true;
+  try {
+    await auth.signInWithEmailAndPassword($('#email').value.trim(), $('#pass').value);
+  } catch(e){
+    log('Error de acceso: ' + (e.message || e), 'err');
+    $('#btnLogin').disabled = false;
+  }
+};
+
+auth.onAuthStateChanged(u => {
+  if (u){
+    $('#loginBox').hidden = true;
+    $('#importBox').hidden = false;
+    $('#log').textContent = 'Sesión iniciada como ' + u.email + '. Listo para importar.';
+  }
+});
+
+$('#btnImport').onclick = async () => {
+  const btn = $('#btnImport');
+  btn.disabled = true;
+  try {
+    log('Leyendo tu base actual…');
+    const snap = await DOC().get();
+    const d = snap.exists ? (snap.data() || {}) : {};
+    const actuales = Array.isArray(d.data) ? d.data : [];
+    const existentes = new Set(actuales.map(c => norm(c.nombre)));
+    log('Clientes actuales en tu base: ' + actuales.length);
+
+    const nuevos = [];
+    for (const c of LISTA){
+      if (existentes.has(norm(c.nombre))){
+        log('Ya existe, lo salto: ' + c.nombre, 'warn');
+        continue;
+      }
+      nuevos.push({
+        id: nuevoId(),
+        nombre: c.nombre,
+        telefono: '',
+        direccion: '',
+        plan: '10 M',
+        monto: 350,
+        diaPago: c.diaPago,
+        corteDias: 0,
+        notas: '',
+        historialPagos: {},
+        folioCliente: 0
+      });
+    }
+    if (!nuevos.length){
+      log('No hay clientes nuevos que agregar. Todo ya estaba en tu base.', 'ok');
+      return;
+    }
+    log('Agregando ' + nuevos.length + ' clientes nuevos…');
+    await DOC().set({ data: [...actuales, ...nuevos] }, { merge: true });
+    log('✓ LISTO. Se agregaron ' + nuevos.length + ' clientes. Total ahora: '
+      + (actuales.length + nuevos.length), 'ok');
+    log('Ya puedes cerrar esta página y abrir tu app normal.');
+  } catch(e){
+    log('Error: ' + (e.message || e), 'err');
+    btn.disabled = false;
+  }
+};
+</script>
+</body>
+</html>
