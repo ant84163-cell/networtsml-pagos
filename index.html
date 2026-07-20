@@ -325,8 +325,9 @@ select.inp{ appearance:none;}
       </div>
       <div>
         <label for="fDir">Dirección</label>
-        <input class="inp" id="fDir" type="text" placeholder="Comunidad" list="listaComunidades" autocomplete="off">
-        <datalist id="listaComunidades"></datalist>
+        <select class="inp" id="fDir" autocomplete="off">
+          <option value="">— Elige comunidad —</option>
+        </select>
       </div>
     </div>
 
@@ -584,7 +585,7 @@ function renderComunidades(){
   }
   const nombres = Object.keys(cuenta).sort((a,b) => a.localeCompare(b, 'es'));
   // Si la comunidad seleccionada ya no existe, la reseteo
-  if (comunidad && !cuenta[comunidad]) comunidad = '';
+  if (comunidad && comunidad !== '__sin__' && !(comunidad in cuenta)) comunidad = '';
   const sinDir = clientes.filter(c => !dirDe(c).trim()).length;
   let html = '<option value="">📍 Todas las comunidades (' + clientes.length + ')</option>';
   html += nombres.map(n =>
@@ -594,9 +595,19 @@ function renderComunidades(){
   sel.innerHTML = html;
   sel.value = comunidad;
 
-  // Sugerencias para el campo Dirección del formulario (evita duplicados por typos)
-  const dl = $('#listaComunidades');
-  if (dl) dl.innerHTML = nombres.map(n => '<option value="' + esc(n) + '">').join('');
+  // Recuadro "Dirección" del formulario: SOLO comunidades registradas
+  const fd = $('#fDir');
+  if (fd){
+    const actual = fd.value;
+    fd.innerHTML = '<option value="">— Elige comunidad —</option>' +
+      nombres.map(n => '<option value="' + esc(n) + '">' + esc(n) + '</option>').join('');
+    if (actual && !nombres.includes(actual)){
+      const o = document.createElement('option');
+      o.value = o.textContent = actual;
+      fd.appendChild(o);
+    }
+    fd.value = actual;
+  }
 }
 
 // ---------- gestionar comunidades ----------
@@ -824,9 +835,16 @@ function abrirModal(i){
   $('#fTel').value     = telDe(c);
   $('#fMonto').value   = i >= 0 ? (montoDe(c) || '') : 350;
   $('#fPlan').value    = i >= 0 ? planDe(c) : '10 M';
-  $('#fDir').value     = dirDe(c);
-  $('#fDiaPago').value = i >= 0 ? (c.diaPago ?? '') : 20;
-  $('#fCorte').value   = i >= 0 ? (c.corteDias ?? '') : 5;
+  const fd = $('#fDir'), dirAct = dirDe(c).trim();
+  if (dirAct && ![...fd.options].some(o => o.value === dirAct)){
+    // dirección vieja que no está en la lista: la agrego para no borrársela
+    const o = document.createElement('option');
+    o.value = o.textContent = dirAct;
+    fd.appendChild(o);
+  }
+  fd.value = dirAct;
+  $('#fDiaPago').value = i >= 0 ? (c.diaPago ?? '') : '';
+  $('#fCorte').value   = i >= 0 ? (c.corteDias ?? '') : 0;
   $('#fNotas').value   = c.notas || '';
   $('#histSec').hidden = i < 0;
   $('#btnDel').hidden  = i < 0;
