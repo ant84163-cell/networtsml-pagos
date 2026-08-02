@@ -205,6 +205,23 @@ select.inp{ appearance:none;}
   padding:12px; font:12px/1.5 "Courier New",monospace; color:#d7e2f2;
   white-space:pre; overflow-x:auto; margin-top:12px;}
 
+/* ---------- confirmación ---------- */
+#confModalBg{ z-index:50; }
+#confModalBg .modal{ max-width:360px; text-align:center; }
+.conf-ico{ width:58px;height:58px;margin:2px auto 12px; border-radius:50%;
+  display:grid;place-items:center;font-size:1.7rem; }
+.conf-ico.pagar{ background:var(--okbg); border:1px solid rgba(52,211,153,.45); color:var(--ok);}
+.conf-ico.quitar{ background:var(--warnbg); border:1px solid rgba(251,191,36,.45); color:var(--warn);}
+.conf-tit{ font:700 1.08rem 'Sora'; margin-bottom:6px;}
+.conf-txt{ color:var(--mut); font-size:.87rem; line-height:1.55;}
+.conf-txt b{ color:var(--tx);}
+.conf-box{ margin-top:14px; background:var(--card2); border:1px solid var(--line);
+  border-radius:12px; padding:11px 13px; text-align:left;}
+.conf-box .cn{ font-weight:700; font-size:.95rem;}
+.conf-box .cm{ color:var(--mut); font-size:.8rem; margin-top:3px; line-height:1.45;}
+.conf-acts{ display:flex; gap:10px; margin-top:18px;}
+.conf-acts .btn{ flex:1; padding:13px;}
+
 /* ---------- toast ---------- */
 #toast{ position:fixed; left:50%; transform:translateX(-50%) translateY(20px);
   bottom:24px; background:#0f1a2e; border:1px solid rgba(52,211,153,.5); color:var(--tx);
@@ -355,7 +372,7 @@ select.inp{ appearance:none;}
         </div>
       </div>
       <div id="histGrid"></div>
-      <div class="hist-hint">Toca un mes para marcar o quitar el pago · se guarda al instante</div>
+      <div class="hist-hint">Toca un mes para marcar o quitar el pago · te pide confirmación</div>
     </div>
 
     <div class="m-acts">
@@ -403,6 +420,20 @@ select.inp{ appearance:none;}
     <div class="m-acts">
       <span class="esp"></span>
       <button class="btn ghost" id="btnComCerrar" type="button">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== MODAL CONFIRMAR PAGO ====== -->
+<div id="confModalBg" class="modal-bg" hidden>
+  <div class="modal">
+    <div class="conf-ico pagar" id="confIco">✓</div>
+    <div class="conf-tit" id="confTit">¿Seguro?</div>
+    <div class="conf-txt" id="confTxt"></div>
+    <div class="conf-box" id="confBox"></div>
+    <div class="conf-acts">
+      <button class="btn ghost" id="confNo" type="button">Cancelar</button>
+      <button class="btn" id="confSi" type="button">Sí, confirmar</button>
     </div>
   </div>
 </div>
@@ -1119,7 +1150,7 @@ document.querySelectorAll('.fchip').forEach(ch => ch.addEventListener('click', (
 function clickAccion(e){
   const b = e.target.closest('[data-act]'); if (!b) return;
   const i = +b.dataset.idx;
-  if (b.dataset.act === 'toggle') togglePago(i, keyDe(mesVista));
+  if (b.dataset.act === 'toggle') pedirConfirmacion(i, keyDe(mesVista));
   if (b.dataset.act === 'edit')   abrirModal(i);
   if (b.dataset.act === 'recibo') abrirRecibo(i);
 }
@@ -1134,7 +1165,7 @@ $('#histPrev').addEventListener('click', () => { histYear--; renderHist(); });
 $('#histNext').addEventListener('click', () => { histYear++; renderHist(); });
 $('#histGrid').addEventListener('click', e => {
   const b = e.target.closest('.mesb'); if (!b || editIdx < 0) return;
-  togglePago(editIdx, b.dataset.key);
+  pedirConfirmacion(editIdx, b.dataset.key);
 });
 $('#btnDel').addEventListener('click', () => {
   if (editIdx < 0) return;
@@ -1165,6 +1196,48 @@ $('#btnImp').addEventListener('click', () => $('#impFile').click());
 $('#impFile').addEventListener('change', e => {
   if (e.target.files && e.target.files[0]) importarRespaldo(e.target.files[0]);
   e.target.value = '';
+});
+
+// ---------- confirmar antes de marcar/quitar pago ----------
+let confAccion = null;
+function pedirConfirmacion(i, key){
+  const c = clientes[i]; if (!c) return;
+  const yaPagado = !!hpDe(c)[key];
+  const [a, m] = key.split('-').map(Number);
+  const periodo = MESES_LARGOS[m-1] + ' ' + a;
+
+  $('#confIco').className = 'conf-ico ' + (yaPagado ? 'quitar' : 'pagar');
+  $('#confIco').textContent = yaPagado ? '↺' : '✓';
+  $('#confTit').textContent = yaPagado ? '¿Quitar este pago?' : '¿Confirmar el cobro?';
+  $('#confTxt').innerHTML = yaPagado
+    ? 'Vas a marcar este mes como <b>NO pagado</b>. Revisa bien antes de continuar.'
+    : 'Vas a <b>registrar el pago</b> de este mes. Se guarda al instante.';
+  $('#confBox').innerHTML =
+    '<div class="cn">' + esc(nombreDe(c)) + '</div>' +
+    '<div class="cm">' + esc(periodo) + ' · ' + money(montoDe(c)) +
+    (dirDe(c) ? ' · ' + esc(dirDe(c)) : '') + '</div>';
+
+  const si = $('#confSi');
+  si.textContent = yaPagado ? 'Sí, quitar pago' : 'Sí, ya me pagó';
+  si.className = 'btn' + (yaPagado ? ' danger' : '');
+
+  confAccion = { i, key };
+  $('#confModalBg').hidden = false;
+  document.body.classList.add('noscroll');
+}
+function cerrarConf(){
+  $('#confModalBg').hidden = true;
+  // si el modal de cliente sigue abierto, no le quito el noscroll
+  if ($('#modalBg').hidden) document.body.classList.remove('noscroll');
+  confAccion = null;
+}
+$('#confNo').addEventListener('click', cerrarConf);
+$('#confModalBg').addEventListener('click', e => { if (e.target === e.currentTarget) cerrarConf(); });
+$('#confSi').addEventListener('click', () => {
+  if (!confAccion) return;
+  const { i, key } = confAccion;
+  cerrarConf();
+  togglePago(i, key);
 });
 
 // ---------- toast ----------
