@@ -475,7 +475,8 @@ const ETIQ = { pagado:'Pagado ✓', pendiente:'Por pagar', gracia:'En gracia', v
 const nuevoId = () => (crypto.randomUUID ? crypto.randomUUID() : 'c' + Date.now() + Math.random().toString(16).slice(2));
 
 // ---------- estado ----------
-let auth = null, db = null, unsub = null;
+let auth = null, db = null, unsub = null, unsubAv = null;
+let avisosMap = {};
 let clientes = [], cargado = false;
 let mesVista = new Date(); mesVista = new Date(mesVista.getFullYear(), mesVista.getMonth(), 1);
 let filtro = 'todos', q = '', comunidad = '';
@@ -552,7 +553,34 @@ const mesLabelTxt = () => cap(mesVista.toLocaleDateString('es-MX',{month:'long'}
 // ---------- Firestore ----------
 const DOC = () => db.collection('networtsml').doc('clientes');
 
+// Avisos de WhatsApp que manda el script (documento aparte). Si las reglas no lo dejan leer, no pasa nada.
+function escucharAvisos(){
+  if (unsubAv) return;
+  try {
+    unsubAv = db.collection('networtsml').doc('avisos').onSnapshot(snap => {
+      avisosMap = snap.data() || {};
+      if (cargado) renderLista();
+    }, err => { console.warn('avisos:', err && err.code); avisosMap = {}; });
+  } catch(e){ console.warn(e); }
+}
+function avisoDe(c){
+  const pref = String(c.id || c.folioCliente || c.nombre) + '_';
+  let mejor = null;
+  for (const k of Object.keys(avisosMap)){
+    if (k.indexOf(pref) !== 0) continue;
+    const a = avisosMap[k];
+    if (a && a.ultimo && (!mejor || a.ultimo > mejor.ultimo)) mejor = a;
+  }
+  return mejor;
+}
+function fechaCorta(iso){
+  const p = String(iso || '').slice(0,10).split('-').map(Number);
+  if (p.length !== 3 || !p[0]) return '';
+  return p[2] + ' de ' + MESES_LARGOS[p[1]-1].toLowerCase();
+}
+
 function empezarEscucha(){
+  escucharAvisos();
   if (unsub) return;
   unsub = DOC().onSnapshot(snap => {
     const d = snap.data() || {};
@@ -839,6 +867,15 @@ function renderLista(){
         ' · <b>' + money(montoViejo) + '</b></div>';
     }
 
+    // Último recordatorio de WhatsApp enviado (solo si todavía debe algo)
+    let notaAviso = '';
+    const av = ad.count > 0 ? avisoDe(c) : null;
+    if (av){
+      notaAviso = '<div class="cli-deuda" style="opacity:.9">📨 Aviso por WhatsApp: ' + esc(fechaCorta(av.ultimo)) +
+        (av.n > 1 ? ' (van ' + av.n + ')' : '') +
+        (av.fechaLimite ? ' · fecha límite <b>' + esc(fechaCorta(av.fechaLimite)) + '</b>' : '') + '</div>';
+    }
+
     const acciones = pagado
       ? '<button class="btn ghost" data-act="toggle" data-idx="' + i + '" type="button">↺ Quitar</button>' +
         '<button class="btn" data-act="recibo" data-idx="' + i + '" type="button">🧾 Recibo</button>' +
@@ -857,6 +894,7 @@ function renderLista(){
         '</div>' +
       '</div>' +
       notaAtraso +
+      notaAviso +
       '<div class="cli-acts">' + acciones + '</div>' +
     '</div>';
   }).join('');
@@ -1282,6 +1320,7 @@ function toast(msg, tipo){
       $('#loginBg').hidden = false;
       $('#uEmail').textContent = '—';
       if (unsub){ unsub(); unsub = null; }
+      if (unsubAv){ unsubAv(); unsubAv = null; avisosMap = {}; }
       clientes = []; cargado = false;
       render();
     }
