@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b1524">
+<title>networtsml · Monedero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b1524; --card:#111e31; --card2:#0d1828;
+  --line:rgba(148,163,184,.15);
+  --tx:#e8eef8; --mut:#8fa3bf;
+  --acc:#38bdf8; --accbg:rgba(56,189,248,.14);
+  --ok:#34d399; --okbg:rgba(52,211,153,.14);
+  --warn:#fbbf24; --bad:#f87171; --badbg:rgba(248,113,113,.14);
+  --r:16px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html,body{margin:0}
+body{ background: radial-gradient(900px 380px at 50% -120px, rgba(56,189,248,.14), transparent 70%), var(--bg);
+  color:var(--tx); font-family:'Inter',system-ui,sans-serif; min-height:100vh; -webkit-tap-highlight-color:transparent; }
+body.noscroll{overflow:hidden}
+.wrap{ max-width:760px; margin:0 auto; padding:16px 16px 90px; }
+header{ position:sticky; top:0; z-index:20; background:rgba(11,21,36,.92); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); }
+.head-in{ max-width:760px; margin:0 auto; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.logo{ font:800 1.05rem 'Sora'; display:flex; align-items:center; gap:9px; }
+.logo small{ display:block; font:500 .68rem 'Inter'; color:var(--mut); }
+.dot{ width:11px; height:11px; border-radius:50%; background:var(--acc); box-shadow:0 0 12px var(--acc); }
+a.volver{ color:var(--mut); font:600 .8rem 'Inter'; text-decoration:none; border:1px solid var(--line); padding:8px 12px; border-radius:10px; background:var(--card2); }
+.card{ background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:14px; }
+.stats{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:14px 0; }
+.stat .k{ font-size:.7rem; color:var(--mut); letter-spacing:.06em; text-transform:uppercase; }
+.stat .v{ font:800 1.5rem 'Sora'; margin-top:4px; }
+.btn{ border:none; border-radius:12px; padding:11px 14px; font:700 .84rem 'Inter'; cursor:pointer; color:var(--tx); }
+.btn:active{ transform:scale(.97); }
+.btn.acc{ background:linear-gradient(180deg,#38bdf8,#0ea5e9); color:#04121f; }
+.btn.ok{ background:linear-gradient(180deg,#34d399,#10b981); color:#04120d; }
+.btn.ghost{ background:var(--card2); border:1px solid var(--line); font-weight:600; }
+.btn.danger{ background:transparent; border:1px solid rgba(248,113,113,.45); color:var(--bad); font-weight:600; }
+.btn.xs{ padding:8px 12px; font-size:.76rem; border-radius:10px; }
+.btn:disabled{ opacity:.5; cursor:not-allowed; }
+.inp{ width:100%; background:var(--card2); border:1px solid var(--line); color:var(--tx); border-radius:12px; padding:12px; font:500 .95rem 'Inter'; outline:none; }
+.inp:focus{ border-color:var(--acc); }
+label{ display:block; font:600 .74rem 'Inter'; color:var(--mut); margin:12px 0 6px; }
+#lista{ display:grid; gap:10px; margin-top:12px; }
+.usr .top{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+.usr .nom{ font:700 1.02rem 'Sora'; word-break:break-word; }
+.usr .meta{ color:var(--mut); font-size:.8rem; margin-top:3px; }
+.usr .saldo{ font:800 1.35rem 'Sora'; color:var(--ok); white-space:nowrap; }
+.usr .saldo.cero{ color:var(--mut); }
+.usr .acts{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+.usr .acts .btn{ flex:1; min-width:96px; }
+.tag{ display:inline-block; font:700 .66rem 'Inter'; color:var(--bad); background:var(--badbg); border-radius:8px; padding:2px 7px; margin-left:6px; vertical-align:middle; }
+.vacio{ text-align:center; color:var(--mut); padding:36px 10px; }
+.fab{ position:fixed; right:18px; bottom:18px; z-index:30; width:58px; height:58px; border-radius:50%; font-size:1.8rem; line-height:1;
+  background:linear-gradient(180deg,#38bdf8,#0ea5e9); color:#04121f; border:none; box-shadow:0 8px 24px rgba(14,165,233,.45); cursor:pointer; }
+.inv{ margin-top:4px; }
+.inv h3{ margin:0 0 10px; font:700 .9rem 'Sora'; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.chips{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.chip{ background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:9px 6px; text-align:center; }
+.chip .n{ font:800 1.15rem 'Sora'; color:var(--ok); }
+.chip .n.poco{ color:var(--warn); } .chip .n.cero{ color:var(--bad); }
+.chip .t{ font-size:.72rem; color:var(--mut); margin-top:2px; }
+.modal-bg{ position:fixed; inset:0; background:rgba(4,9,20,.72); backdrop-filter:blur(4px); z-index:60; display:flex; align-items:flex-end; justify-content:center; padding:0; }
+.modal{ background:var(--card); border:1px solid var(--line); width:100%; max-width:480px; border-radius:20px 20px 0 0; padding:18px 18px 22px; max-height:92vh; overflow:auto; }
+@media(min-width:560px){ .modal-bg{ align-items:center; padding:16px; } .modal{ border-radius:20px; } }
+.modal h2{ font:800 1.1rem 'Sora'; margin:0; }
+.msub{ color:var(--mut); font-size:.82rem; margin-top:3px; }
+.m-acts{ display:flex; gap:10px; margin-top:18px; flex-wrap:wrap; }
+.m-acts .btn{ flex:1; min-width:110px; }
+.rapidos{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+.rapidos button{ flex:1; min-width:58px; }
+.seg{ display:flex; gap:8px; margin-top:6px; }
+.seg button{ flex:1; padding:10px; border-radius:12px; border:1px solid var(--line); background:var(--card2); color:var(--mut); font:700 .82rem 'Inter'; cursor:pointer; }
+.seg button.on{ border-color:var(--acc); color:var(--acc); background:var(--accbg); }
+.seg button.on.rest{ border-color:var(--bad); color:var(--bad); background:var(--badbg); }
+.mov{ display:flex; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); font-size:.86rem; }
+.mov:last-child{ border-bottom:none; }
+.mov .f{ color:var(--mut); font-size:.74rem; }
+.mov .m.pos{ color:var(--ok); font-weight:700; } .mov .m.neg{ color:var(--bad); font-weight:700; }
+.mov .sd{ color:var(--mut); font-size:.74rem; text-align:right; }
+.clavebox{ background:var(--card2); border:1px dashed var(--acc); border-radius:14px; padding:14px; margin-top:14px; text-align:center; }
+.clavebox .c{ font:800 1.5rem 'Sora'; letter-spacing:.08em; margin-top:6px; }
+.clavebox .k{ color:var(--mut); font-size:.74rem; text-transform:uppercase; letter-spacing:.06em; }
+.nota{ color:var(--mut); font-size:.8rem; margin-top:12px; line-height:1.4; }
+#toast{ position:fixed; left:50%; bottom:90px; transform:translateX(-50%); background:#0f2238; border:1px solid var(--line); padding:11px 16px; border-radius:12px; z-index:90; font-weight:600; font-size:.86rem; opacity:0; pointer-events:none; transition:opacity .2s; max-width:90vw; text-align:center; }
+#toast.on{ opacity:1; }
+#toast.bad{ border-color:rgba(248,113,113,.5); color:var(--bad); }
+#aviso{ background:var(--badbg); border:1px solid rgba(248,113,113,.4); color:var(--bad); border-radius:12px; padding:10px 12px; margin-top:12px; font-size:.84rem; }
+#loginBg{ position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; padding:16px;
+  background: radial-gradient(900px 380px at 50% -120px, rgba(56,189,248,.14), transparent 70%), var(--bg); }
+.login-card{ width:100%; max-width:380px; }
+.lerr{ color:var(--bad); font-size:.82rem; margin-top:10px; min-height:1em; }
+</style>
+</head>
+<body>
+
+<div id="loginBg">
+  <div class="card login-card">
+    <div class="logo"><span class="dot"></span><div>networtsml<small>Monedero · saldo de usuarios</small></div></div>
+    <label for="lEmail">Correo</label>
+    <input class="inp" id="lEmail" type="email" autocomplete="email" placeholder="correo@ejemplo.com">
+    <label for="lPass">Contraseña</label>
+    <input class="inp" id="lPass" type="password" autocomplete="current-password" placeholder="••••••••">
+    <button class="btn acc" id="btnLogin" type="button" style="width:100%;margin-top:16px">Entrar</button>
+    <div id="lError" class="lerr"></div>
+  </div>
+</div>
+
+<header>
+  <div class="head-in">
+    <div class="logo"><span class="dot"></span><div>Monedero<small>Saldo de usuarios</small></div></div>
+    <a class="volver" href="index.html">← Mensualidades</a>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="stats">
+    <div class="card stat"><div class="k">Saldo total de usuarios</div><div class="v" id="stTotal">$0</div></div>
+    <div class="card stat"><div class="k">Usuarios</div><div class="v" id="stUsers">0</div></div>
+  </div>
+
+  <div class="card inv">
+    <h3><span>Fichas disponibles</span><button class="btn ghost xs" id="btnFichas" type="button">Cargar fichas</button></h3>
+    <div class="chips" id="chips"></div>
+    <input type="file" id="fileFichas" accept=".pdf,application/pdf,.json,application/json" multiple hidden>
+    <div class="hint" style="margin-top:8px;color:var(--mut);font-size:.8rem">Cargar fichas: elige los PDF que imprime WirenexFree (puedes elegir varios a la vez).</div>
+  </div>
+
+  <div style="margin-top:14px">
+    <input class="inp" id="buscar" type="search" placeholder="Buscar por nombre, cuenta o teléfono…">
+  </div>
+  <div id="aviso" hidden></div>
+  <div id="lista"><div class="vacio">Cargando…</div></div>
+</div>
+
+<button class="fab" id="btnNuevo" type="button" aria-label="Nuevo usuario">＋</button>
+
+<!-- modal usuario -->
+<div id="mUserBg" class="modal-bg" hidden>
+  <div class="modal">
+    <h2 id="uTitulo">Nuevo usuario</h2>
+    <div class="msub" id="uSub"></div>
+    <label for="uNombre">Nombre</label>
+    <input class="inp" id="uNombre" placeholder="Nombre del usuario">
+    <label for="uTel">Teléfono (opcional)</label>
+    <input class="inp" id="uTel" type="tel" placeholder="10 dígitos">
+    <label for="uNotas">Notas (opcional)</label>
+    <input class="inp" id="uNotas" placeholder="Comunidad, referencia…">
+    <div id="uClaveWrap">
+      <label for="uClave">Contraseña (déjala vacía para que se genere sola)</label>
+      <input class="inp" id="uClave" placeholder="6 números, por ejemplo" autocomplete="off">
+    </div>
+    <div class="m-acts">
+      <button class="btn danger" id="uDel" type="button" hidden>Eliminar</button>
+      <button class="btn ghost" id="uVer" type="button" hidden>👁 Ver contraseña</button>
+      <button class="btn ghost" id="uReset" type="button" hidden>Nueva contraseña</button>
+      <button class="btn ghost" id="uCancel" type="button">Cancelar</button>
+      <button class="btn acc" id="uOk" type="button">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- modal contraseña (se muestra una sola vez) -->
+<div id="mClaveBg" class="modal-bg" hidden>
+  <div class="modal">
+    <h2 id="kTitulo">Usuario listo</h2>
+    <div class="msub" id="kSub"></div>
+    <div class="clavebox">
+      <div class="k">Cuenta</div><div class="c" id="kCuenta"></div>
+      <div class="k" style="margin-top:12px">Contraseña</div><div class="c" id="kClave"></div>
+    </div>
+    <div class="nota" id="kNota"></div>
+    <div class="m-acts">
+      <button class="btn ghost" id="kCopiar" type="button">Copiar datos</button>
+      <button class="btn acc" id="kOk" type="button">Listo</button>
+    </div>
+  </div>
+</div>
+
+<!-- modal recarga -->
+<div id="mRecBg" class="modal-bg" hidden>
+  <div class="modal">
+    <h2 id="rTitulo">Cargar saldo</h2>
+    <div class="msub" id="rSub"></div>
+    <div class="seg">
+      <button id="rTipoSuma" class="on" type="button">+ Cargar</button>
+      <button id="rTipoResta" type="button">− Descontar</button>
+    </div>
+    <label for="rMonto">Monto ($)</label>
+    <input class="inp" id="rMonto" type="number" inputmode="decimal" min="0" placeholder="0">
+    <div class="rapidos" id="rRapidos"></div>
+    <label for="rMetodo">Método</label>
+    <select class="inp" id="rMetodo">
+      <option>Efectivo</option><option>Transferencia</option><option>Depósito</option><option>Otro</option>
+    </select>
+    <label for="rNota">Nota (opcional)</label>
+    <input class="inp" id="rNota" placeholder="Ej. recarga del 26 de octubre">
+    <div class="m-acts">
+      <button class="btn ghost" id="rCancel" type="button">Cancelar</button>
+      <button class="btn ok" id="rOk" type="button">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- modal historial -->
+<div id="mHisBg" class="modal-bg" hidden>
+  <div class="modal">
+    <h2 id="hTitulo">Historial</h2>
+    <div class="msub" id="hSub"></div>
+    <div id="hLista" style="margin-top:10px"></div>
+    <div class="m-acts"><button class="btn ghost" id="hCerrar" type="button">Cerrar</button></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script>
+(() => {
+'use strict';
+const firebaseConfig = {
+  apiKey: "AIzaSyCSJJa_7QOgRzo0waEa-tUsHHWd_QAdFz8",
+  authDomain: "networtsml-pro.firebaseapp.com",
+  projectId: "networtsml-pro",
+  storageBucket: "networtsml-pro.firebasestorage.app",
+  messagingSenderId: "244577304776",
+  appId: "1:244577304776:web:ec92da03925406217e65fd"
+};
+const API = 'https://us-central1-networtsml-pro.cloudfunctions.net/admin';
+const RAPIDOS = [10, 20, 50, 100, 200];
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const money = n => (Number(n)||0).toLocaleString('es-MX',{style:'currency',currency:'MXN',minimumFractionDigits:0,maximumFractionDigits:2});
+const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const fechaHora = iso => {
+  const d = new Date(iso); if (isNaN(d)) return '';
+  return d.toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' }) + ' ' +
+         d.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
+};
+const abrir  = id => { $(id).hidden = false; document.body.classList.add('noscroll'); };
+const cerrar = id => { $(id).hidden = true;  document.body.classList.remove('noscroll'); };
+function toast(msg, tipo){
+  const t = $('#toast'); t.textContent = msg; t.className = 'on' + (tipo ? ' ' + tipo : '');
+  clearTimeout(toast._t); toast._t = setTimeout(() => { t.className = ''; }, 3200);
+}
+
+let auth, usuarios = [], inventario = [], cargado = false, q = '';
+let editCuenta = null, recCuenta = null, recTipo = 'suma', claveTexto = '';
+
+// ---------- llamadas al servidor (siempre con tu sesión) ----------
+async function api(accion, datos){
+  const u = auth.currentUser; if (!u) throw new Error('Inicia sesión otra vez');
+  const token = await u.getIdToken();
+  let r;
+  try {
+    r = await fetch(API, { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + token },
+      body: JSON.stringify({ accion, ...(datos || {}) }) });
+  } catch(e){ throw new Error('Sin conexión con el servidor. Revisa tu internet.'); }
+  let j = {}; try { j = await r.json(); } catch(_){}
+  if (!r.ok || !j.ok) throw new Error(j.error || ('Error del servidor (' + r.status + ')'));
+  return j;
+}
+async function accion(a, d, okMsg){
+  try { const j = await api(a, d); if (okMsg) toast(okMsg); return j; }
+  catch(e){ toast(e.message, 'bad'); return null; }
+}
+
+async function cargar(){
+  try {
+    const j = await api('listar');
+    usuarios = j.usuarios || []; inventario = j.inventario || []; cargado = true;
+    $('#aviso').hidden = true; render();
+  } catch(e){
+    const a = $('#aviso'); a.hidden = false; a.textContent = '⚠️ ' + e.message;
+    if (!cargado){ $('#lista').innerHTML = '<div class="vacio">No se pudo cargar.</div>'; }
+  }
+}
+
+// ---------- pantalla ----------
+function render(){
+  const total = usuarios.reduce((a, u) => a + (Number(u.saldo) || 0), 0);
+  $('#stTotal').textContent = money(total);
+  $('#stUsers').textContent = usuarios.length;
+  $('#chips').innerHTML = inventario.map(i => {
+    const cls = i.libres === 0 ? 'cero' : i.libres <= 3 ? 'poco' : '';
+    return '<div class="chip"><div class="n ' + cls + '">' + i.libres + '</div><div class="t">' + esc(i.nombre) + ' · $' + i.precio + '</div></div>';
+  }).join('');
+  const cont = $('#lista');
+  if (!cargado){ return; }
+  if (!usuarios.length){ cont.innerHTML = '<div class="vacio">Todavía no hay usuarios.<br>Toca ＋ para crear el primero.</div>'; return; }
+  let items = usuarios.slice();
+  if (q){ const nq = norm(q); items = items.filter(u => norm(u.nombre + ' ' + u.cuenta + ' ' + (u.telefono||'')).includes(nq)); }
+  items.sort((a, b) => String(a.nombre).localeCompare(String(b.nombre), 'es'));
+  if (!items.length){ cont.innerHTML = '<div class="vacio">Nada con esa búsqueda 🔍</div>'; return; }
+  cont.innerHTML = items.map(u => {
+    const s = Number(u.saldo) || 0;
+    const meta = [u.cuenta, u.telefono, u.notas].filter(Boolean).map(esc).join(' · ');
+    return '<div class="card usr"><div class="top"><div><div class="nom">' + esc(u.nombre) + (u.bloqueado ? '<span class="tag">BLOQUEADO</span>' : '') +
+      '</div><div class="meta">' + meta + '</div></div><div class="saldo ' + (s === 0 ? 'cero' : '') + '">' + money(s) + '</div></div>' +
+      '<div class="acts"><button class="btn ok xs" data-a="rec" data-id="' + esc(u.cuenta) + '" type="button">＋ Cargar saldo</button>' +
+      '<button class="btn ghost xs" data-a="his" data-id="' + esc(u.cuenta) + '" type="button">Historial</button>' +
+      '<button class="btn ghost xs" data-a="edit" data-id="' + esc(u.cuenta) + '" type="button">✎ Editar</button></div></div>';
+  }).join('');
+}
+const buscarU = c => usuarios.find(u => u.cuenta === c);
+
+// ---------- contraseña (se muestra una vez) ----------
+const NOTA_NUEVA = '⚠️ Cópiala y mándasela al cliente. Tú puedes volver a verla en ✎ Editar → 👁 Ver contraseña, mientras el cliente no la cambie.';
+function mostrarClave(titulo, cuenta, nombre, clave, nota){
+  $('#kTitulo').textContent = titulo; $('#kSub').textContent = nombre;
+  $('#kCuenta').textContent = cuenta; $('#kClave').textContent = clave; $('#kNota').textContent = nota || NOTA_NUEVA;
+  claveTexto = 'Networts ML - Monedero\nCuenta: ' + cuenta + '\nContraseña: ' + clave;
+  abrir('#mClaveBg');
+}
+$('#kCopiar').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(claveTexto); toast('Copiado ✓'); }
+  catch(_){ toast('No se pudo copiar, anótalos a mano', 'bad'); }
+});
+$('#kOk').addEventListener('click', () => cerrar('#mClaveBg'));
+
+// ---------- usuario ----------
+function abrirUsuario(cuenta){
+  editCuenta = cuenta || null;
+  const u = cuenta ? buscarU(cuenta) : null;
+  $('#uTitulo').textContent = u ? 'Editar usuario' : 'Nuevo usuario';
+  $('#uSub').textContent = u ? ('Cuenta ' + u.cuenta) : 'Se le asigna un número de cuenta automático';
+  $('#uNombre').value = u ? u.nombre : ''; $('#uTel').value = u ? (u.telefono || '') : ''; $('#uNotas').value = u ? (u.notas || '') : '';
+  $('#uClave').value = ''; $('#uClaveWrap').hidden = !!u;
+  $('#uDel').hidden = !u; $('#uReset').hidden = !u; $('#uVer').hidden = !u;
+  abrir('#mUserBg'); setTimeout(() => $('#uNombre').focus(), 50);
+}
+async function guardarUsuario(){
+  const nombre = $('#uNombre').value.trim();
+  if (!nombre){ toast('Ponle nombre al usuario', 'bad'); return; }
+  const base = { nombre, telefono: $('#uTel').value.trim(), notas: $('#uNotas').value.trim() };
+  $('#uOk').disabled = true;
+  let j;
+  if (editCuenta) j = await accion('editar', { ...base, cuenta: editCuenta }, 'Guardado ✓');
+  else j = await accion('crearUsuario', { ...base, clave: $('#uClave').value.trim() || undefined });
+  $('#uOk').disabled = false;
+  if (!j) return;
+  cerrar('#mUserBg');
+  if (!editCuenta) mostrarClave('Usuario creado ✓', j.cuenta, nombre, j.clave);
+  cargar();
+}
+async function nuevaClave(){
+  const u = buscarU(editCuenta); if (!u) return;
+  if (!confirm('¿Generar una contraseña nueva para ' + u.nombre + '?\nLa anterior deja de servir.')) return;
+  const j = await accion('resetClave', { cuenta: u.cuenta });
+  if (!j) return;
+  cerrar('#mUserBg'); mostrarClave('Contraseña nueva', u.cuenta, u.nombre, j.clave); cargar();
+}
+async function verClave(){
+  const u = buscarU(editCuenta); if (!u) return;
+  const j = await accion('verClave', { cuenta: u.cuenta });
+  if (!j) return;
+  if (!j.clave){ toast('El cliente cambió su contraseña y solo él la sabe. Si la olvida, genera una nueva.', 'bad'); return; }
+  cerrar('#mUserBg');
+  mostrarClave('Contraseña de ' + u.nombre, u.cuenta, u.nombre, j.clave, 'Esta es la contraseña que le diste. Si el cliente la cambia desde su app, ya no aparecerá aquí.');
+}
+async function borrarUsuario(){
+  const u = buscarU(editCuenta); if (!u) return;
+  const aviso = (Number(u.saldo) || 0) !== 0 ? '\n\nOJO: todavía tiene ' + money(u.saldo) + ' de saldo.' : '';
+  if (!confirm('¿Eliminar a ' + u.nombre + ' (' + u.cuenta + ')?' + aviso + '\n\nSe borra también su historial. No se puede deshacer.')) return;
+  const j = await accion('eliminar', { cuenta: u.cuenta }, 'Usuario eliminado');
+  if (j){ cerrar('#mUserBg'); cargar(); }
+}
+
+// ---------- recarga / descuento ----------
+function abrirRecarga(cuenta){
+  recCuenta = cuenta; const u = buscarU(cuenta); if (!u) return;
+  $('#rTitulo').textContent = u.nombre;
+  $('#rSub').textContent = u.cuenta + ' · saldo actual ' + money(u.saldo);
+  $('#rMonto').value = ''; $('#rNota').value = ''; $('#rMetodo').value = 'Efectivo';
+  setTipo('suma');
+  $('#rRapidos').innerHTML = RAPIDOS.map(m => '<button class="btn ghost xs" data-m="' + m + '" type="button">$' + m + '</button>').join('');
+  abrir('#mRecBg'); setTimeout(() => $('#rMonto').focus(), 50);
+}
+function setTipo(t){
+  recTipo = t;
+  $('#rTipoSuma').className = t === 'suma' ? 'on' : ''; $('#rTipoResta').className = t === 'resta' ? 'on rest' : '';
+  $('#rOk').textContent = t === 'suma' ? 'Cargar saldo' : 'Descontar';
+}
+async function confirmarRecarga(){
+  const monto = Math.round((parseFloat($('#rMonto').value) || 0) * 100) / 100;
+  if (!(monto > 0)){ toast('Pon un monto mayor a 0', 'bad'); return; }
+  const delta = recTipo === 'suma' ? monto : -monto;
+  $('#rOk').disabled = true;
+  const j = await accion('cargar', { cuenta: recCuenta, monto: delta, metodo: $('#rMetodo').value, nota: $('#rNota').value.trim() });
+  $('#rOk').disabled = false;
+  if (!j) return;
+  cerrar('#mRecBg');
+  toast((delta > 0 ? 'Saldo cargado ✓ ' : 'Descontado ✓ ') + money(Math.abs(delta)) + ' · ahora tiene ' + money(j.saldo));
+  cargar();
+}
+
+// ---------- historial ----------
+async function abrirHistorial(cuenta){
+  const u = buscarU(cuenta); if (!u) return;
+  $('#hTitulo').textContent = u.nombre;
+  $('#hSub').textContent = u.cuenta + ' · saldo ' + money(u.saldo);
+  $('#hLista').innerHTML = '<div class="vacio">Cargando…</div>';
+  abrir('#mHisBg');
+  const j = await accion('historial', { cuenta });
+  if (!j){ cerrar('#mHisBg'); return; }
+  const movs = j.movs || [];
+  $('#hLista').innerHTML = movs.length ? movs.map(m => {
+    const pos = Number(m.monto) >= 0;
+    const tit = m.tipo === 'compra' ? 'Compra · ' + esc(m.ficha) : m.tipo === 'recarga' ? 'Recarga' : 'Ajuste';
+    const det = m.tipo === 'compra' ? ' · ficha ' + esc(m.usuario) : (m.metodo ? ' · ' + esc(m.metodo) : '');
+    return '<div class="mov"><div><div>' + tit + det + '</div><div class="f">' + esc(fechaHora(m.f)) +
+      (m.nota ? ' · ' + esc(m.nota) : '') + '</div></div><div><div class="m ' + (pos ? 'pos' : 'neg') + '">' + (pos ? '+' : '−') + money(Math.abs(m.monto)) +
+      '</div><div class="sd">saldo ' + money(m.saldo) + '</div></div></div>';
+  }).join('') : '<div class="vacio">Sin movimientos todavía</div>';
+}
+
+// ---------- cargar fichas desde PDF (WirenexFree) o JSON ----------
+const NOMBRES_FICHA = {
+  '1h|TIEMPO CORRIDO': '1 hora ($5)', '3h|TIEMPO CORRIDO': '3 horas ($10)', '7h|TIEMPO PAUSADO': '7 horas pausable ($15)',
+  '1d|TIEMPO CORRIDO': '1 día ($20)', '7d|TIEMPO CORRIDO': '1 semana ($80)', '30d|TIEMPO CORRIDO': '1 mes ($180)'
+};
+const PDFJS_V = '3.11.174', PDFJS_BASE = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/' + PDFJS_V + '/';
+let pdfjsListo = null;
+function cargarPdfJs(){
+  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if (!pdfjsListo) pdfjsListo = new Promise((ok, mal) => {
+    const sc = document.createElement('script'); sc.src = PDFJS_BASE + 'pdf.min.js';
+    sc.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_BASE + 'pdf.worker.min.js'; ok(window.pdfjsLib); };
+    sc.onerror = () => { pdfjsListo = null; mal(new Error('No se pudo cargar el lector de PDF. Revisa tu internet.')); };
+    document.head.appendChild(sc);
+  });
+  return pdfjsListo;
+}
+// Cada ticket trae: usuario, contraseña, "Acceder en su navegador", ..., "Tiempo: X", "Perfil: Y"
+function extraerFichas(tokens){
+  const t = tokens.join('\n'), out = [];
+  const re = /(\S+)\n(\S+)\nAcceder en su navegador\n[\s\S]*?Tiempo:\s*(\S+)\s*\n\s*Perfil:\s*([^\n]+)/g; let m;
+  while ((m = re.exec(t))) out.push({ usuario: m[1], clave: m[2], tiempo: m[3].trim(), perfil: m[4].trim() });
+  return out;
+}
+async function leerPdf(file){
+  const lib = await cargarPdfJs();
+  const doc = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  const tokens = [];
+  for (let p = 1; p <= doc.numPages; p++){
+    const c = await (await doc.getPage(p)).getTextContent();
+    c.items.forEach(i => { const x = String(i.str || '').trim(); if (x) tokens.push(x); });
+  }
+  return extraerFichas(tokens);
+}
+async function subirFichas(files){
+  let lista = [], sinLeer = [];
+  $('#btnFichas').disabled = true;
+  try {
+    for (const file of files){
+      try {
+        if (/\.json$/i.test(file.name)){ const j = JSON.parse(await file.text()); if (Array.isArray(j)) lista = lista.concat(j); else sinLeer.push(file.name); }
+        else { const f = await leerPdf(file); if (f.length) lista = lista.concat(f); else sinLeer.push(file.name); }
+      } catch(e){ sinLeer.push(file.name); }
+    }
+    if (!lista.length){ toast('No encontré fichas en ' + (sinLeer.join(', ') || 'los archivos') + '. ¿Son los PDF de WirenexFree?', 'bad'); return; }
+    const cuenta = {}, raras = {};
+    lista.forEach(f => { const k = String(f.tiempo).toLowerCase() + '|' + String(f.perfil).toUpperCase(); if (NOMBRES_FICHA[k]) cuenta[k] = (cuenta[k] || 0) + 1; else raras[k] = (raras[k] || 0) + 1; });
+    let resumen = Object.keys(cuenta).map(k => '• ' + cuenta[k] + ' de ' + NOMBRES_FICHA[k]).join('\n');
+    if (Object.keys(raras).length) resumen += '\n\nNO se cargarán (tipo no reconocido):\n' + Object.keys(raras).map(k => '• ' + raras[k] + ' de ' + k.replace('|', ' / ')).join('\n');
+    if (sinLeer.length) resumen += '\n\nNo pude leer: ' + sinLeer.join(', ');
+    if (!Object.keys(cuenta).length){ alert('Ninguna ficha es de un tipo que vendas:\n' + resumen); return; }
+    if (!confirm('Encontré ' + lista.length + ' fichas:\n\n' + resumen + '\n\n¿Las cargo al sistema?')) return;
+    let ag = 0, rep = 0, rech = 0;
+    try {
+      for (let i = 0; i < lista.length; i += 300){
+        const j = await api('importarFichas', { fichas: lista.slice(i, i + 300) });
+        ag += j.agregadas; rep += j.repetidas; rech += j.rechazadas;
+      }
+      toast('Fichas: ' + ag + ' nuevas' + (rep ? ', ' + rep + ' ya estaban' : '') + (rech ? ', ' + rech + ' rechazadas' : ''), rech ? 'bad' : '');
+    } catch(e){ toast(e.message + ' (nuevas hasta ahora: ' + ag + ')', 'bad'); }
+  } finally { $('#btnFichas').disabled = false; cargar(); }
+}
+
+// ---------- eventos ----------
+$('#buscar').addEventListener('input', e => { q = e.target.value.trim(); render(); });
+$('#btnNuevo').addEventListener('click', () => abrirUsuario(null));
+$('#lista').addEventListener('click', e => {
+  const b = e.target.closest('button[data-a]'); if (!b) return;
+  const c = b.dataset.id;
+  if (b.dataset.a === 'rec') abrirRecarga(c); else if (b.dataset.a === 'his') abrirHistorial(c); else if (b.dataset.a === 'edit') abrirUsuario(c);
+});
+$('#uCancel').addEventListener('click', () => cerrar('#mUserBg'));
+$('#uOk').addEventListener('click', guardarUsuario);
+$('#uDel').addEventListener('click', borrarUsuario);
+$('#uReset').addEventListener('click', nuevaClave);
+$('#uVer').addEventListener('click', verClave);
+$('#rCancel').addEventListener('click', () => cerrar('#mRecBg'));
+$('#rOk').addEventListener('click', confirmarRecarga);
+$('#rTipoSuma').addEventListener('click', () => setTipo('suma'));
+$('#rTipoResta').addEventListener('click', () => setTipo('resta'));
+$('#rRapidos').addEventListener('click', e => { const b = e.target.closest('button[data-m]'); if (b) $('#rMonto').value = b.dataset.m; });
+$('#hCerrar').addEventListener('click', () => cerrar('#mHisBg'));
+$('#btnFichas').addEventListener('click', () => $('#fileFichas').click());
+$('#fileFichas').addEventListener('change', e => { const fs = Array.from(e.target.files || []); e.target.value = ''; if (fs.length) subirFichas(fs); });
+
+// ---------- sesión ----------
+function mensajeAuth(code){
+  return ({ 'auth/invalid-email':'Correo no válido.', 'auth/user-not-found':'Usuario no encontrado.', 'auth/wrong-password':'Contraseña incorrecta.',
+    'auth/invalid-credential':'Correo o contraseña incorrectos.', 'auth/too-many-requests':'Demasiados intentos. Espera unos minutos.',
+    'auth/network-request-failed':'Sin conexión a internet.' })[code] || 'Error al iniciar sesión.';
+}
+async function entrar(){
+  const email = $('#lEmail').value.trim(), pass = $('#lPass').value;
+  if (!email || !pass){ $('#lError').textContent = 'Escribe tu correo y contraseña.'; return; }
+  $('#btnLogin').disabled = true; $('#lError').textContent = '';
+  try { await auth.signInWithEmailAndPassword(email, pass); }
+  catch(e){ $('#lError').textContent = mensajeAuth(e.code); }
+  $('#btnLogin').disabled = false;
+}
+$('#btnLogin').addEventListener('click', entrar);
+$('#lPass').addEventListener('keydown', e => { if (e.key === 'Enter') entrar(); });
+
+firebase.initializeApp(firebaseConfig);
+auth = firebase.auth();
+auth.onAuthStateChanged(user => {
+  if (user){ $('#loginBg').hidden = true; cargar(); }
+  else { $('#loginBg').hidden = false; usuarios = []; inventario = []; cargado = false; render(); }
+});
+})();
+</script>
+</body>
+</html>
