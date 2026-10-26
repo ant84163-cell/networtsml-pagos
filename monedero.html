@@ -95,6 +95,16 @@ label{ display:block; font:600 .74rem 'Inter'; color:var(--mut); margin:12px 0 6
   background: radial-gradient(900px 380px at 50% -120px, rgba(56,189,248,.14), transparent 70%), var(--bg); }
 .login-card{ width:100%; max-width:380px; }
 .lerr{ color:var(--bad); font-size:.82rem; margin-top:10px; min-height:1em; }
+
+.chip.btnchip{ cursor:pointer; font:inherit; color:inherit; width:100%; }
+.chip.btnchip:hover{ border-color:var(--ok); }
+.tabs2{ display:flex; gap:8px; margin-top:12px; }
+.tabs2 button{ flex:1; padding:9px 4px; border-radius:10px; border:1px solid var(--line); background:transparent; color:var(--mut); font:700 .85rem 'Inter',sans-serif; cursor:pointer; }
+.tabs2 button.on{ background:var(--card2); color:var(--ok); border-color:var(--ok); }
+.fic{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); font-size:.9rem; }
+.fic .cod{ font:700 .95rem ui-monospace,Menlo,Consolas,monospace; letter-spacing:.04em; }
+.fic .cod span{ color:var(--mut); font-weight:500; }
+.fic .qn{ color:var(--mut); font-size:.74rem; text-align:right; }
 </style>
 </head>
 <body>
@@ -217,6 +227,17 @@ label{ display:block; font:600 .74rem 'Inter'; color:var(--mut); margin:12px 0 6
   </div>
 </div>
 
+<!-- modal fichas -->
+<div id="mFicBg" class="modal-bg" hidden>
+  <div class="modal">
+    <h2 id="fTitulo">Fichas</h2>
+    <div class="msub" id="fSub"></div>
+    <div class="tabs2"><button type="button" id="fTabLibres" class="on">Disponibles</button><button type="button" id="fTabVendidas">Vendidas</button></div>
+    <div id="fLista" style="margin-top:8px"></div>
+    <div class="m-acts"><button class="btn ghost" id="fCopiar" type="button">Copiar lista</button><button class="btn ghost" id="fCerrar" type="button">Cerrar</button></div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -290,7 +311,7 @@ function render(){
   $('#stUsers').textContent = usuarios.length;
   $('#chips').innerHTML = inventario.map(i => {
     const cls = i.libres === 0 ? 'cero' : i.libres <= 3 ? 'poco' : '';
-    return '<div class="chip"><div class="n ' + cls + '">' + i.libres + '</div><div class="t">' + esc(i.nombre) + ' · $' + i.precio + '</div></div>';
+    return '<button type="button" class="chip btnchip" data-t="' + esc(i.id) + '"><div class="n ' + cls + '">' + i.libres + '</div><div class="t">' + esc(i.nombre) + ' · $' + i.precio + '</div></button>';
   }).join('');
   const cont = $('#lista');
   if (!cargado){ return; }
@@ -484,6 +505,26 @@ async function subirFichas(files){
   } finally { $('#btnFichas').disabled = false; cargar(); }
 }
 
+// ---------- ver fichas de un tipo ----------
+let fichaVista = { tipo: null, estado: 'libre', lista: [] };
+async function verFichas(tipo, estado){
+  const inv = inventario.find(x => x.id === tipo); if (!inv) return;
+  fichaVista = { tipo, estado, lista: [] };
+  $('#fTitulo').textContent = inv.nombre + ' · $' + inv.precio;
+  $('#fSub').textContent = inv.libres + ' disponibles · ' + inv.vendidas + ' vendidas';
+  $('#fTabLibres').classList.toggle('on', estado === 'libre'); $('#fTabVendidas').classList.toggle('on', estado === 'vendida');
+  $('#fLista').innerHTML = '<div class="vacio">Cargando…</div>';
+  abrir('#mFicBg');
+  const j = await accion('listarFichas', { tipo, estado });
+  if (!j){ cerrar('#mFicBg'); return; }
+  if (fichaVista.tipo !== tipo || fichaVista.estado !== estado) return; // cambió de pestaña mientras cargaba
+  fichaVista.lista = j.fichas || [];
+  $('#fLista').innerHTML = fichaVista.lista.length ? fichaVista.lista.map(f => {
+    const quien = estado === 'vendida' ? '<div class="qn">' + esc(f.nombreCliente || f.vendidaA || '') + '<br>' + esc(f.vendidaEn ? fechaHora(f.vendidaEn) : '') + '</div>' : '';
+    return '<div class="fic"><div class="cod">' + esc(f.usuario) + ' <span>/</span> ' + esc(f.clave) + '</div>' + quien + '</div>';
+  }).join('') : '<div class="vacio">' + (estado === 'libre' ? 'No hay fichas disponibles de este tipo' : 'Todavía no se vende ninguna de este tipo') + '</div>';
+}
+
 // ---------- eventos ----------
 $('#buscar').addEventListener('input', e => { q = e.target.value.trim(); render(); });
 $('#btnNuevo').addEventListener('click', () => abrirUsuario(null));
@@ -503,6 +544,15 @@ $('#rTipoSuma').addEventListener('click', () => setTipo('suma'));
 $('#rTipoResta').addEventListener('click', () => setTipo('resta'));
 $('#rRapidos').addEventListener('click', e => { const b = e.target.closest('button[data-m]'); if (b) $('#rMonto').value = b.dataset.m; });
 $('#hCerrar').addEventListener('click', () => cerrar('#mHisBg'));
+$('#chips').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (b) verFichas(b.dataset.t, 'libre'); });
+$('#fTabLibres').addEventListener('click', () => verFichas(fichaVista.tipo, 'libre'));
+$('#fTabVendidas').addEventListener('click', () => verFichas(fichaVista.tipo, 'vendida'));
+$('#fCerrar').addEventListener('click', () => cerrar('#mFicBg'));
+$('#fCopiar').addEventListener('click', async () => {
+  if (!fichaVista.lista.length){ toast('No hay nada que copiar', 'bad'); return; }
+  try { await navigator.clipboard.writeText(fichaVista.lista.map(f => f.usuario + ' / ' + f.clave).join('\n')); toast('Lista copiada ✓'); }
+  catch(_){ toast('No se pudo copiar', 'bad'); }
+});
 $('#btnFichas').addEventListener('click', () => $('#fileFichas').click());
 $('#fileFichas').addEventListener('change', e => { const fs = Array.from(e.target.files || []); e.target.value = ''; if (fs.length) subirFichas(fs); });
 
