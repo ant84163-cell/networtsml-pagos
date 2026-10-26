@@ -156,6 +156,7 @@ label{ display:block; font:600 .74rem 'Inter'; color:var(--mut); margin:12px 0 6
     </div>
     <div class="m-acts">
       <button class="btn danger" id="uDel" type="button" hidden>Eliminar</button>
+      <button class="btn ghost" id="uVer" type="button" hidden>👁 Ver contraseña</button>
       <button class="btn ghost" id="uReset" type="button" hidden>Nueva contraseña</button>
       <button class="btn ghost" id="uCancel" type="button">Cancelar</button>
       <button class="btn acc" id="uOk" type="button">Guardar</button>
@@ -172,7 +173,7 @@ label{ display:block; font:600 .74rem 'Inter'; color:var(--mut); margin:12px 0 6
       <div class="k">Cuenta</div><div class="c" id="kCuenta"></div>
       <div class="k" style="margin-top:12px">Contraseña</div><div class="c" id="kClave"></div>
     </div>
-    <div class="nota">⚠️ La contraseña solo se muestra ahora. Cópiala y mándasela al cliente. Si la pierde, le generas una nueva desde ✎ Editar.</div>
+    <div class="nota" id="kNota"></div>
     <div class="m-acts">
       <button class="btn ghost" id="kCopiar" type="button">Copiar datos</button>
       <button class="btn acc" id="kOk" type="button">Listo</button>
@@ -310,9 +311,10 @@ function render(){
 const buscarU = c => usuarios.find(u => u.cuenta === c);
 
 // ---------- contraseña (se muestra una vez) ----------
-function mostrarClave(titulo, cuenta, nombre, clave){
+const NOTA_NUEVA = '⚠️ Cópiala y mándasela al cliente. Tú puedes volver a verla en ✎ Editar → 👁 Ver contraseña, mientras el cliente no la cambie.';
+function mostrarClave(titulo, cuenta, nombre, clave, nota){
   $('#kTitulo').textContent = titulo; $('#kSub').textContent = nombre;
-  $('#kCuenta').textContent = cuenta; $('#kClave').textContent = clave;
+  $('#kCuenta').textContent = cuenta; $('#kClave').textContent = clave; $('#kNota').textContent = nota || NOTA_NUEVA;
   claveTexto = 'Networts ML - Monedero\nCuenta: ' + cuenta + '\nContraseña: ' + clave;
   abrir('#mClaveBg');
 }
@@ -330,7 +332,7 @@ function abrirUsuario(cuenta){
   $('#uSub').textContent = u ? ('Cuenta ' + u.cuenta) : 'Se le asigna un número de cuenta automático';
   $('#uNombre').value = u ? u.nombre : ''; $('#uTel').value = u ? (u.telefono || '') : ''; $('#uNotas').value = u ? (u.notas || '') : '';
   $('#uClave').value = ''; $('#uClaveWrap').hidden = !!u;
-  $('#uDel').hidden = !u; $('#uReset').hidden = !u;
+  $('#uDel').hidden = !u; $('#uReset').hidden = !u; $('#uVer').hidden = !u;
   abrir('#mUserBg'); setTimeout(() => $('#uNombre').focus(), 50);
 }
 async function guardarUsuario(){
@@ -353,6 +355,14 @@ async function nuevaClave(){
   const j = await accion('resetClave', { cuenta: u.cuenta });
   if (!j) return;
   cerrar('#mUserBg'); mostrarClave('Contraseña nueva', u.cuenta, u.nombre, j.clave); cargar();
+}
+async function verClave(){
+  const u = buscarU(editCuenta); if (!u) return;
+  const j = await accion('verClave', { cuenta: u.cuenta });
+  if (!j) return;
+  if (!j.clave){ toast('El cliente cambió su contraseña y solo él la sabe. Si la olvida, genera una nueva.', 'bad'); return; }
+  cerrar('#mUserBg');
+  mostrarClave('Contraseña de ' + u.nombre, u.cuenta, u.nombre, j.clave, 'Esta es la contraseña que le diste. Si el cliente la cambia desde su app, ya no aparecerá aquí.');
 }
 async function borrarUsuario(){
   const u = buscarU(editCuenta); if (!u) return;
@@ -440,6 +450,7 @@ $('#uCancel').addEventListener('click', () => cerrar('#mUserBg'));
 $('#uOk').addEventListener('click', guardarUsuario);
 $('#uDel').addEventListener('click', borrarUsuario);
 $('#uReset').addEventListener('click', nuevaClave);
+$('#uVer').addEventListener('click', verClave);
 $('#rCancel').addEventListener('click', () => cerrar('#mRecBg'));
 $('#rOk').addEventListener('click', confirmarRecarga);
 $('#rTipoSuma').addEventListener('click', () => setTipo('suma'));
