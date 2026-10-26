@@ -46,27 +46,32 @@ a.volver{ color:var(--mut); font:600 .8rem 'Inter'; text-decoration:none; border
 .inp{ width:100%; background:var(--card2); border:1px solid var(--line); color:var(--tx); border-radius:12px; padding:12px; font:500 .95rem 'Inter'; outline:none; }
 .inp:focus{ border-color:var(--acc); }
 label{ display:block; font:600 .74rem 'Inter'; color:var(--mut); margin:12px 0 6px; }
-.fila{ display:flex; gap:10px; align-items:center; }
-.fila .inp{ flex:1; }
 #lista{ display:grid; gap:10px; margin-top:12px; }
 .usr .top{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
 .usr .nom{ font:700 1.02rem 'Sora'; word-break:break-word; }
 .usr .meta{ color:var(--mut); font-size:.8rem; margin-top:3px; }
 .usr .saldo{ font:800 1.35rem 'Sora'; color:var(--ok); white-space:nowrap; }
 .usr .saldo.cero{ color:var(--mut); }
-.usr .saldo.neg{ color:var(--bad); }
 .usr .acts{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
 .usr .acts .btn{ flex:1; min-width:96px; }
+.tag{ display:inline-block; font:700 .66rem 'Inter'; color:var(--bad); background:var(--badbg); border-radius:8px; padding:2px 7px; margin-left:6px; vertical-align:middle; }
 .vacio{ text-align:center; color:var(--mut); padding:36px 10px; }
 .fab{ position:fixed; right:18px; bottom:18px; z-index:30; width:58px; height:58px; border-radius:50%; font-size:1.8rem; line-height:1;
   background:linear-gradient(180deg,#38bdf8,#0ea5e9); color:#04121f; border:none; box-shadow:0 8px 24px rgba(14,165,233,.45); cursor:pointer; }
+.inv{ margin-top:4px; }
+.inv h3{ margin:0 0 10px; font:700 .9rem 'Sora'; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.chips{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.chip{ background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:9px 6px; text-align:center; }
+.chip .n{ font:800 1.15rem 'Sora'; color:var(--ok); }
+.chip .n.poco{ color:var(--warn); } .chip .n.cero{ color:var(--bad); }
+.chip .t{ font-size:.72rem; color:var(--mut); margin-top:2px; }
 .modal-bg{ position:fixed; inset:0; background:rgba(4,9,20,.72); backdrop-filter:blur(4px); z-index:60; display:flex; align-items:flex-end; justify-content:center; padding:0; }
 .modal{ background:var(--card); border:1px solid var(--line); width:100%; max-width:480px; border-radius:20px 20px 0 0; padding:18px 18px 22px; max-height:92vh; overflow:auto; }
 @media(min-width:560px){ .modal-bg{ align-items:center; padding:16px; } .modal{ border-radius:20px; } }
 .modal h2{ font:800 1.1rem 'Sora'; margin:0; }
 .msub{ color:var(--mut); font-size:.82rem; margin-top:3px; }
-.m-acts{ display:flex; gap:10px; margin-top:18px; }
-.m-acts .btn{ flex:1; }
+.m-acts{ display:flex; gap:10px; margin-top:18px; flex-wrap:wrap; }
+.m-acts .btn{ flex:1; min-width:110px; }
 .rapidos{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
 .rapidos button{ flex:1; min-width:58px; }
 .seg{ display:flex; gap:8px; margin-top:6px; }
@@ -78,7 +83,11 @@ label{ display:block; font:600 .74rem 'Inter'; color:var(--mut); margin:12px 0 6
 .mov .f{ color:var(--mut); font-size:.74rem; }
 .mov .m.pos{ color:var(--ok); font-weight:700; } .mov .m.neg{ color:var(--bad); font-weight:700; }
 .mov .sd{ color:var(--mut); font-size:.74rem; text-align:right; }
-#toast{ position:fixed; left:50%; bottom:90px; transform:translateX(-50%); background:#0f2238; border:1px solid var(--line); padding:11px 16px; border-radius:12px; z-index:90; font-weight:600; font-size:.86rem; opacity:0; pointer-events:none; transition:opacity .2s; max-width:90vw; }
+.clavebox{ background:var(--card2); border:1px dashed var(--acc); border-radius:14px; padding:14px; margin-top:14px; text-align:center; }
+.clavebox .c{ font:800 1.5rem 'Sora'; letter-spacing:.08em; margin-top:6px; }
+.clavebox .k{ color:var(--mut); font-size:.74rem; text-transform:uppercase; letter-spacing:.06em; }
+.nota{ color:var(--mut); font-size:.8rem; margin-top:12px; line-height:1.4; }
+#toast{ position:fixed; left:50%; bottom:90px; transform:translateX(-50%); background:#0f2238; border:1px solid var(--line); padding:11px 16px; border-radius:12px; z-index:90; font-weight:600; font-size:.86rem; opacity:0; pointer-events:none; transition:opacity .2s; max-width:90vw; text-align:center; }
 #toast.on{ opacity:1; }
 #toast.bad{ border-color:rgba(248,113,113,.5); color:var(--bad); }
 #aviso{ background:var(--badbg); border:1px solid rgba(248,113,113,.4); color:var(--bad); border-radius:12px; padding:10px 12px; margin-top:12px; font-size:.84rem; }
@@ -114,7 +123,16 @@ label{ display:block; font:600 .74rem 'Inter'; color:var(--mut); margin:12px 0 6
     <div class="card stat"><div class="k">Saldo total de usuarios</div><div class="v" id="stTotal">$0</div></div>
     <div class="card stat"><div class="k">Usuarios</div><div class="v" id="stUsers">0</div></div>
   </div>
-  <input class="inp" id="buscar" type="search" placeholder="Buscar por nombre, cuenta o teléfono…">
+
+  <div class="card inv">
+    <h3><span>Fichas disponibles</span><button class="btn ghost xs" id="btnFichas" type="button">Cargar fichas</button></h3>
+    <div class="chips" id="chips"></div>
+    <input type="file" id="fileFichas" accept=".json,application/json" hidden>
+  </div>
+
+  <div style="margin-top:14px">
+    <input class="inp" id="buscar" type="search" placeholder="Buscar por nombre, cuenta o teléfono…">
+  </div>
   <div id="aviso" hidden></div>
   <div id="lista"><div class="vacio">Cargando…</div></div>
 </div>
@@ -132,10 +150,32 @@ label{ display:block; font:600 .74rem 'Inter'; color:var(--mut); margin:12px 0 6
     <input class="inp" id="uTel" type="tel" placeholder="10 dígitos">
     <label for="uNotas">Notas (opcional)</label>
     <input class="inp" id="uNotas" placeholder="Comunidad, referencia…">
+    <div id="uClaveWrap">
+      <label for="uClave">Contraseña (déjala vacía para que se genere sola)</label>
+      <input class="inp" id="uClave" placeholder="6 números, por ejemplo" autocomplete="off">
+    </div>
     <div class="m-acts">
       <button class="btn danger" id="uDel" type="button" hidden>Eliminar</button>
+      <button class="btn ghost" id="uReset" type="button" hidden>Nueva contraseña</button>
       <button class="btn ghost" id="uCancel" type="button">Cancelar</button>
       <button class="btn acc" id="uOk" type="button">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- modal contraseña (se muestra una sola vez) -->
+<div id="mClaveBg" class="modal-bg" hidden>
+  <div class="modal">
+    <h2 id="kTitulo">Usuario listo</h2>
+    <div class="msub" id="kSub"></div>
+    <div class="clavebox">
+      <div class="k">Cuenta</div><div class="c" id="kCuenta"></div>
+      <div class="k" style="margin-top:12px">Contraseña</div><div class="c" id="kClave"></div>
+    </div>
+    <div class="nota">⚠️ La contraseña solo se muestra ahora. Cópiala y mándasela al cliente. Si la pierde, le generas una nueva desde ✎ Editar.</div>
+    <div class="m-acts">
+      <button class="btn ghost" id="kCopiar" type="button">Copiar datos</button>
+      <button class="btn acc" id="kOk" type="button">Listo</button>
     </div>
   </div>
 </div>
@@ -179,7 +219,6 @@ label{ display:block; font:600 .74rem 'Inter'; color:var(--mut); margin:12px 0 6
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
 (() => {
 'use strict';
@@ -191,67 +230,54 @@ const firebaseConfig = {
   messagingSenderId: "244577304776",
   appId: "1:244577304776:web:ec92da03925406217e65fd"
 };
+const API = 'https://us-central1-networtsml-pro.cloudfunctions.net/admin';
+const RAPIDOS = [10, 20, 50, 100, 200];
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const money = n => (Number(n)||0).toLocaleString('es-MX',{style:'currency',currency:'MXN',minimumFractionDigits:0,maximumFractionDigits:2});
-const MAX_MOVS = 200;          // movimientos que se guardan por usuario
-const RAPIDOS = [10, 20, 50, 100, 200];
-
-let auth, db, unsub = null;
-let usuarios = [], cargado = false, q = '';
-let editId = null, recId = null, recTipo = 'suma';
-
-// el monedero vive en su propio documento: NO toca el de clientes
-const DOC = () => db.collection('networtsml').doc('monedero');
-
-function toast(msg, tipo){
-  const t = $('#toast'); t.textContent = msg; t.className = 'on' + (tipo ? ' ' + tipo : '');
-  clearTimeout(toast._t); toast._t = setTimeout(() => { t.className = ''; }, 2600);
-}
-const abrir  = id => { $(id).hidden = false; document.body.classList.add('noscroll'); };
-const cerrar = id => { $(id).hidden = true;  document.body.classList.remove('noscroll'); };
 const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 const fechaHora = iso => {
   const d = new Date(iso); if (isNaN(d)) return '';
   return d.toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' }) + ' ' +
          d.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
 };
-const idNuevo = () => 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-
-// ---------- lectura en vivo ----------
-function empezarEscucha(){
-  if (unsub) return;
-  unsub = DOC().onSnapshot(snap => {
-    const d = snap.data() || {};
-    usuarios = Array.isArray(d.usuarios) ? d.usuarios : [];
-    cargado = true; $('#aviso').hidden = true; render();
-  }, err => {
-    console.error(err);
-    const a = $('#aviso'); a.hidden = false;
-    a.textContent = '⚠️ No pude leer el monedero. Revisa tu internet o las reglas de Firestore.';
-  });
+const abrir  = id => { $(id).hidden = false; document.body.classList.add('noscroll'); };
+const cerrar = id => { $(id).hidden = true;  document.body.classList.remove('noscroll'); };
+function toast(msg, tipo){
+  const t = $('#toast'); t.textContent = msg; t.className = 'on' + (tipo ? ' ' + tipo : '');
+  clearTimeout(toast._t); toast._t = setTimeout(() => { t.className = ''; }, 3200);
 }
 
-// ---------- escritura segura (transacción: lee lo último, cambia y guarda) ----------
-async function cambiar(fn){
+let auth, usuarios = [], inventario = [], cargado = false, q = '';
+let editCuenta = null, recCuenta = null, recTipo = 'suma', claveTexto = '';
+
+// ---------- llamadas al servidor (siempre con tu sesión) ----------
+async function api(accion, datos){
+  const u = auth.currentUser; if (!u) throw new Error('Inicia sesión otra vez');
+  const token = await u.getIdToken();
+  let r;
   try {
-    const ref = DOC();
-    await db.runTransaction(async tx => {
-      const snap = await tx.get(ref);
-      const d = snap.exists ? snap.data() : {};
-      const lista = Array.isArray(d.usuarios) ? d.usuarios.map(u => ({ ...u })) : [];
-      let contador = Number(d.contador) || 0;
-      const r = fn(lista, contador);
-      if (r && r.error) throw new Error(r.error);
-      tx.set(ref, { usuarios: lista, contador: (r && r.contador != null) ? r.contador : contador,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
-    });
-    return true;
+    r = await fetch(API, { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + token },
+      body: JSON.stringify({ accion, ...(datos || {}) }) });
+  } catch(e){ throw new Error('Sin conexión con el servidor. Revisa tu internet.'); }
+  let j = {}; try { j = await r.json(); } catch(_){}
+  if (!r.ok || !j.ok) throw new Error(j.error || ('Error del servidor (' + r.status + ')'));
+  return j;
+}
+async function accion(a, d, okMsg){
+  try { const j = await api(a, d); if (okMsg) toast(okMsg); return j; }
+  catch(e){ toast(e.message, 'bad'); return null; }
+}
+
+async function cargar(){
+  try {
+    const j = await api('listar');
+    usuarios = j.usuarios || []; inventario = j.inventario || []; cargado = true;
+    $('#aviso').hidden = true; render();
   } catch(e){
-    console.error(e);
-    toast(e.message && !/permission|network|offline/i.test(e.message) ? e.message : 'No se pudo guardar. Revisa tu internet.', 'bad');
-    return false;
+    const a = $('#aviso'); a.hidden = false; a.textContent = '⚠️ ' + e.message;
+    if (!cargado){ $('#lista').innerHTML = '<div class="vacio">No se pudo cargar.</div>'; }
   }
 }
 
@@ -260,11 +286,13 @@ function render(){
   const total = usuarios.reduce((a, u) => a + (Number(u.saldo) || 0), 0);
   $('#stTotal').textContent = money(total);
   $('#stUsers').textContent = usuarios.length;
+  $('#chips').innerHTML = inventario.map(i => {
+    const cls = i.libres === 0 ? 'cero' : i.libres <= 3 ? 'poco' : '';
+    return '<div class="chip"><div class="n ' + cls + '">' + i.libres + '</div><div class="t">' + esc(i.nombre) + ' · $' + i.precio + '</div></div>';
+  }).join('');
   const cont = $('#lista');
-  if (!cargado){ cont.innerHTML = '<div class="vacio">Cargando…</div>'; return; }
-  if (!usuarios.length){
-    cont.innerHTML = '<div class="vacio">Todavía no hay usuarios.<br>Toca ＋ para crear el primero.</div>'; return;
-  }
+  if (!cargado){ return; }
+  if (!usuarios.length){ cont.innerHTML = '<div class="vacio">Todavía no hay usuarios.<br>Toca ＋ para crear el primero.</div>'; return; }
   let items = usuarios.slice();
   if (q){ const nq = norm(q); items = items.filter(u => norm(u.nombre + ' ' + u.cuenta + ' ' + (u.telefono||'')).includes(nq)); }
   items.sort((a, b) => String(a.nombre).localeCompare(String(b.nombre), 'es'));
@@ -272,54 +300,71 @@ function render(){
   cont.innerHTML = items.map(u => {
     const s = Number(u.saldo) || 0;
     const meta = [u.cuenta, u.telefono, u.notas].filter(Boolean).map(esc).join(' · ');
-    return '<div class="card usr"><div class="top"><div><div class="nom">' + esc(u.nombre) + '</div><div class="meta">' + meta + '</div></div>' +
-      '<div class="saldo ' + (s < 0 ? 'neg' : s === 0 ? 'cero' : '') + '">' + money(s) + '</div></div>' +
-      '<div class="acts"><button class="btn ok xs" data-a="rec" data-id="' + esc(u.id) + '" type="button">＋ Cargar saldo</button>' +
-      '<button class="btn ghost xs" data-a="his" data-id="' + esc(u.id) + '" type="button">Historial</button>' +
-      '<button class="btn ghost xs" data-a="edit" data-id="' + esc(u.id) + '" type="button">✎ Editar</button></div></div>';
+    return '<div class="card usr"><div class="top"><div><div class="nom">' + esc(u.nombre) + (u.bloqueado ? '<span class="tag">BLOQUEADO</span>' : '') +
+      '</div><div class="meta">' + meta + '</div></div><div class="saldo ' + (s === 0 ? 'cero' : '') + '">' + money(s) + '</div></div>' +
+      '<div class="acts"><button class="btn ok xs" data-a="rec" data-id="' + esc(u.cuenta) + '" type="button">＋ Cargar saldo</button>' +
+      '<button class="btn ghost xs" data-a="his" data-id="' + esc(u.cuenta) + '" type="button">Historial</button>' +
+      '<button class="btn ghost xs" data-a="edit" data-id="' + esc(u.cuenta) + '" type="button">✎ Editar</button></div></div>';
   }).join('');
 }
-const buscarU = id => usuarios.find(u => u.id === id);
+const buscarU = c => usuarios.find(u => u.cuenta === c);
+
+// ---------- contraseña (se muestra una vez) ----------
+function mostrarClave(titulo, cuenta, nombre, clave){
+  $('#kTitulo').textContent = titulo; $('#kSub').textContent = nombre;
+  $('#kCuenta').textContent = cuenta; $('#kClave').textContent = clave;
+  claveTexto = 'Networts ML - Monedero\nCuenta: ' + cuenta + '\nContraseña: ' + clave;
+  abrir('#mClaveBg');
+}
+$('#kCopiar').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(claveTexto); toast('Copiado ✓'); }
+  catch(_){ toast('No se pudo copiar, anótalos a mano', 'bad'); }
+});
+$('#kOk').addEventListener('click', () => cerrar('#mClaveBg'));
 
 // ---------- usuario ----------
-function abrirUsuario(id){
-  editId = id || null;
-  const u = id ? buscarU(id) : null;
+function abrirUsuario(cuenta){
+  editCuenta = cuenta || null;
+  const u = cuenta ? buscarU(cuenta) : null;
   $('#uTitulo').textContent = u ? 'Editar usuario' : 'Nuevo usuario';
   $('#uSub').textContent = u ? ('Cuenta ' + u.cuenta) : 'Se le asigna un número de cuenta automático';
   $('#uNombre').value = u ? u.nombre : ''; $('#uTel').value = u ? (u.telefono || '') : ''; $('#uNotas').value = u ? (u.notas || '') : '';
-  $('#uDel').hidden = !u;
+  $('#uClave').value = ''; $('#uClaveWrap').hidden = !!u;
+  $('#uDel').hidden = !u; $('#uReset').hidden = !u;
   abrir('#mUserBg'); setTimeout(() => $('#uNombre').focus(), 50);
 }
 async function guardarUsuario(){
   const nombre = $('#uNombre').value.trim();
   if (!nombre){ toast('Ponle nombre al usuario', 'bad'); return; }
-  const tel = $('#uTel').value.trim(), notas = $('#uNotas').value.trim();
+  const base = { nombre, telefono: $('#uTel').value.trim(), notas: $('#uNotas').value.trim() };
   $('#uOk').disabled = true;
-  const ok = await cambiar((lista, contador) => {
-    if (editId){
-      const u = lista.find(x => x.id === editId); if (!u) return { error: 'El usuario ya no existe' };
-      u.nombre = nombre; u.telefono = tel; u.notas = notas; return {};
-    }
-    const n = contador + 1;
-    lista.push({ id: idNuevo(), cuenta: 'NET-' + String(n).padStart(4, '0'), nombre, telefono: tel, notas,
-                 saldo: 0, creado: new Date().toISOString(), movs: [] });
-    return { contador: n };
-  });
+  let j;
+  if (editCuenta) j = await accion('editar', { ...base, cuenta: editCuenta }, 'Guardado ✓');
+  else j = await accion('crearUsuario', { ...base, clave: $('#uClave').value.trim() || undefined });
   $('#uOk').disabled = false;
-  if (ok){ cerrar('#mUserBg'); toast(editId ? 'Guardado ✓' : 'Usuario creado ✓'); }
+  if (!j) return;
+  cerrar('#mUserBg');
+  if (!editCuenta) mostrarClave('Usuario creado ✓', j.cuenta, nombre, j.clave);
+  cargar();
+}
+async function nuevaClave(){
+  const u = buscarU(editCuenta); if (!u) return;
+  if (!confirm('¿Generar una contraseña nueva para ' + u.nombre + '?\nLa anterior deja de servir.')) return;
+  const j = await accion('resetClave', { cuenta: u.cuenta });
+  if (!j) return;
+  cerrar('#mUserBg'); mostrarClave('Contraseña nueva', u.cuenta, u.nombre, j.clave); cargar();
 }
 async function borrarUsuario(){
-  const u = buscarU(editId); if (!u) return;
+  const u = buscarU(editCuenta); if (!u) return;
   const aviso = (Number(u.saldo) || 0) !== 0 ? '\n\nOJO: todavía tiene ' + money(u.saldo) + ' de saldo.' : '';
-  if (!confirm('¿Eliminar a ' + u.nombre + ' (' + u.cuenta + ')?' + aviso + '\n\nEsto no se puede deshacer.')) return;
-  const ok = await cambiar(lista => { const i = lista.findIndex(x => x.id === editId); if (i < 0) return { error: 'Ya no existe' }; lista.splice(i, 1); return {}; });
-  if (ok){ cerrar('#mUserBg'); toast('Usuario eliminado'); }
+  if (!confirm('¿Eliminar a ' + u.nombre + ' (' + u.cuenta + ')?' + aviso + '\n\nSe borra también su historial. No se puede deshacer.')) return;
+  const j = await accion('eliminar', { cuenta: u.cuenta }, 'Usuario eliminado');
+  if (j){ cerrar('#mUserBg'); cargar(); }
 }
 
 // ---------- recarga / descuento ----------
-function abrirRecarga(id){
-  recId = id; const u = buscarU(id); if (!u) return;
+function abrirRecarga(cuenta){
+  recCuenta = cuenta; const u = buscarU(cuenta); if (!u) return;
   $('#rTitulo').textContent = u.nombre;
   $('#rSub').textContent = u.cuenta + ' · saldo actual ' + money(u.saldo);
   $('#rMonto').value = ''; $('#rNota').value = ''; $('#rMetodo').value = 'Efectivo';
@@ -336,36 +381,51 @@ async function confirmarRecarga(){
   const monto = Math.round((parseFloat($('#rMonto').value) || 0) * 100) / 100;
   if (!(monto > 0)){ toast('Pon un monto mayor a 0', 'bad'); return; }
   const delta = recTipo === 'suma' ? monto : -monto;
-  const metodo = $('#rMetodo').value, nota = $('#rNota').value.trim();
   $('#rOk').disabled = true;
-  const ok = await cambiar(lista => {
-    const u = lista.find(x => x.id === recId); if (!u) return { error: 'El usuario ya no existe' };
-    const nuevo = Math.round(((Number(u.saldo) || 0) + delta) * 100) / 100;
-    if (nuevo < 0) return { error: 'No alcanza: tiene ' + money(u.saldo) };
-    u.saldo = nuevo;
-    const movs = Array.isArray(u.movs) ? u.movs.slice() : [];
-    movs.push({ f: new Date().toISOString(), tipo: recTipo === 'suma' ? 'recarga' : 'ajuste', monto: delta, saldo: nuevo, metodo, nota });
-    u.movs = movs.slice(-MAX_MOVS);
-    return {};
-  });
+  const j = await accion('cargar', { cuenta: recCuenta, monto: delta, metodo: $('#rMetodo').value, nota: $('#rNota').value.trim() });
   $('#rOk').disabled = false;
-  if (ok){ cerrar('#mRecBg'); toast((delta > 0 ? 'Saldo cargado ✓ ' : 'Descontado ✓ ') + money(Math.abs(delta))); }
+  if (!j) return;
+  cerrar('#mRecBg');
+  toast((delta > 0 ? 'Saldo cargado ✓ ' : 'Descontado ✓ ') + money(Math.abs(delta)) + ' · ahora tiene ' + money(j.saldo));
+  cargar();
 }
 
 // ---------- historial ----------
-function abrirHistorial(id){
-  const u = buscarU(id); if (!u) return;
+async function abrirHistorial(cuenta){
+  const u = buscarU(cuenta); if (!u) return;
   $('#hTitulo').textContent = u.nombre;
   $('#hSub').textContent = u.cuenta + ' · saldo ' + money(u.saldo);
-  const movs = (u.movs || []).slice().reverse();
+  $('#hLista').innerHTML = '<div class="vacio">Cargando…</div>';
+  abrir('#mHisBg');
+  const j = await accion('historial', { cuenta });
+  if (!j){ cerrar('#mHisBg'); return; }
+  const movs = j.movs || [];
   $('#hLista').innerHTML = movs.length ? movs.map(m => {
     const pos = Number(m.monto) >= 0;
-    const tit = m.tipo === 'compra' ? 'Compra de ficha' : m.tipo === 'recarga' ? 'Recarga' : 'Ajuste';
-    return '<div class="mov"><div><div>' + tit + (m.metodo ? ' · ' + esc(m.metodo) : '') + '</div><div class="f">' + esc(fechaHora(m.f)) +
+    const tit = m.tipo === 'compra' ? 'Compra · ' + esc(m.ficha) : m.tipo === 'recarga' ? 'Recarga' : 'Ajuste';
+    const det = m.tipo === 'compra' ? ' · ficha ' + esc(m.usuario) : (m.metodo ? ' · ' + esc(m.metodo) : '');
+    return '<div class="mov"><div><div>' + tit + det + '</div><div class="f">' + esc(fechaHora(m.f)) +
       (m.nota ? ' · ' + esc(m.nota) : '') + '</div></div><div><div class="m ' + (pos ? 'pos' : 'neg') + '">' + (pos ? '+' : '−') + money(Math.abs(m.monto)) +
       '</div><div class="sd">saldo ' + money(m.saldo) + '</div></div></div>';
   }).join('') : '<div class="vacio">Sin movimientos todavía</div>';
-  abrir('#mHisBg');
+}
+
+// ---------- cargar fichas desde archivo ----------
+async function subirFichas(file){
+  let lista;
+  try { lista = JSON.parse(await file.text()); } catch(_){ toast('El archivo no es válido', 'bad'); return; }
+  if (!Array.isArray(lista) || !lista.length){ toast('El archivo no trae fichas', 'bad'); return; }
+  if (!confirm('Vas a cargar ' + lista.length + ' fichas al sistema.\n¿Seguimos?')) return;
+  let ag = 0, rep = 0, rech = 0;
+  $('#btnFichas').disabled = true;
+  try {
+    for (let i = 0; i < lista.length; i += 300){
+      const j = await api('importarFichas', { fichas: lista.slice(i, i + 300) });
+      ag += j.agregadas; rep += j.repetidas; rech += j.rechazadas;
+    }
+    toast('Fichas: ' + ag + ' nuevas' + (rep ? ', ' + rep + ' ya estaban' : '') + (rech ? ', ' + rech + ' rechazadas' : ''), rech ? 'bad' : '');
+  } catch(e){ toast(e.message + ' (nuevas hasta ahora: ' + ag + ')', 'bad'); }
+  $('#btnFichas').disabled = false; cargar();
 }
 
 // ---------- eventos ----------
@@ -373,18 +433,21 @@ $('#buscar').addEventListener('input', e => { q = e.target.value.trim(); render(
 $('#btnNuevo').addEventListener('click', () => abrirUsuario(null));
 $('#lista').addEventListener('click', e => {
   const b = e.target.closest('button[data-a]'); if (!b) return;
-  const id = b.dataset.id;
-  if (b.dataset.a === 'rec') abrirRecarga(id); else if (b.dataset.a === 'his') abrirHistorial(id); else if (b.dataset.a === 'edit') abrirUsuario(id);
+  const c = b.dataset.id;
+  if (b.dataset.a === 'rec') abrirRecarga(c); else if (b.dataset.a === 'his') abrirHistorial(c); else if (b.dataset.a === 'edit') abrirUsuario(c);
 });
 $('#uCancel').addEventListener('click', () => cerrar('#mUserBg'));
 $('#uOk').addEventListener('click', guardarUsuario);
 $('#uDel').addEventListener('click', borrarUsuario);
+$('#uReset').addEventListener('click', nuevaClave);
 $('#rCancel').addEventListener('click', () => cerrar('#mRecBg'));
 $('#rOk').addEventListener('click', confirmarRecarga);
 $('#rTipoSuma').addEventListener('click', () => setTipo('suma'));
 $('#rTipoResta').addEventListener('click', () => setTipo('resta'));
 $('#rRapidos').addEventListener('click', e => { const b = e.target.closest('button[data-m]'); if (b) $('#rMonto').value = b.dataset.m; });
 $('#hCerrar').addEventListener('click', () => cerrar('#mHisBg'));
+$('#btnFichas').addEventListener('click', () => $('#fileFichas').click());
+$('#fileFichas').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) subirFichas(f); });
 
 // ---------- sesión ----------
 function mensajeAuth(code){
@@ -404,10 +467,10 @@ $('#btnLogin').addEventListener('click', entrar);
 $('#lPass').addEventListener('keydown', e => { if (e.key === 'Enter') entrar(); });
 
 firebase.initializeApp(firebaseConfig);
-auth = firebase.auth(); db = firebase.firestore();
+auth = firebase.auth();
 auth.onAuthStateChanged(user => {
-  if (user){ $('#loginBg').hidden = true; empezarEscucha(); }
-  else { $('#loginBg').hidden = false; if (unsub){ unsub(); unsub = null; } usuarios = []; cargado = false; render(); }
+  if (user){ $('#loginBg').hidden = true; cargar(); }
+  else { $('#loginBg').hidden = false; usuarios = []; inventario = []; cargado = false; render(); }
 });
 })();
 </script>
