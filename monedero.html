@@ -127,7 +127,8 @@ label{ display:block; font:600 .74rem 'Inter'; color:var(--mut); margin:12px 0 6
   <div class="card inv">
     <h3><span>Fichas disponibles</span><button class="btn ghost xs" id="btnFichas" type="button">Cargar fichas</button></h3>
     <div class="chips" id="chips"></div>
-    <input type="file" id="fileFichas" accept=".json,application/json" hidden>
+    <input type="file" id="fileFichas" accept=".pdf,application/pdf,.json,application/json" multiple hidden>
+    <div class="hint" style="margin-top:8px;color:var(--mut);font-size:.8rem">Cargar fichas: elige los PDF que imprime WirenexFree (puedes elegir varios a la vez).</div>
   </div>
 
   <div style="margin-top:14px">
@@ -420,22 +421,67 @@ async function abrirHistorial(cuenta){
   }).join('') : '<div class="vacio">Sin movimientos todavía</div>';
 }
 
-// ---------- cargar fichas desde archivo ----------
-async function subirFichas(file){
-  let lista;
-  try { lista = JSON.parse(await file.text()); } catch(_){ toast('El archivo no es válido', 'bad'); return; }
-  if (!Array.isArray(lista) || !lista.length){ toast('El archivo no trae fichas', 'bad'); return; }
-  if (!confirm('Vas a cargar ' + lista.length + ' fichas al sistema.\n¿Seguimos?')) return;
-  let ag = 0, rep = 0, rech = 0;
+// ---------- cargar fichas desde PDF (WirenexFree) o JSON ----------
+const NOMBRES_FICHA = {
+  '1h|TIEMPO CORRIDO': '1 hora ($5)', '3h|TIEMPO CORRIDO': '3 horas ($10)', '7h|TIEMPO PAUSADO': '7 horas pausable ($15)',
+  '1d|TIEMPO CORRIDO': '1 día ($20)', '7d|TIEMPO CORRIDO': '1 semana ($80)', '30d|TIEMPO CORRIDO': '1 mes ($180)'
+};
+const PDFJS_V = '3.11.174', PDFJS_BASE = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/' + PDFJS_V + '/';
+let pdfjsListo = null;
+function cargarPdfJs(){
+  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if (!pdfjsListo) pdfjsListo = new Promise((ok, mal) => {
+    const sc = document.createElement('script'); sc.src = PDFJS_BASE + 'pdf.min.js';
+    sc.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_BASE + 'pdf.worker.min.js'; ok(window.pdfjsLib); };
+    sc.onerror = () => { pdfjsListo = null; mal(new Error('No se pudo cargar el lector de PDF. Revisa tu internet.')); };
+    document.head.appendChild(sc);
+  });
+  return pdfjsListo;
+}
+// Cada ticket trae: usuario, contraseña, "Acceder en su navegador", ..., "Tiempo: X", "Perfil: Y"
+function extraerFichas(tokens){
+  const t = tokens.join('\n'), out = [];
+  const re = /(\S+)\n(\S+)\nAcceder en su navegador\n[\s\S]*?Tiempo:\s*(\S+)\s*\n\s*Perfil:\s*([^\n]+)/g; let m;
+  while ((m = re.exec(t))) out.push({ usuario: m[1], clave: m[2], tiempo: m[3].trim(), perfil: m[4].trim() });
+  return out;
+}
+async function leerPdf(file){
+  const lib = await cargarPdfJs();
+  const doc = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  const tokens = [];
+  for (let p = 1; p <= doc.numPages; p++){
+    const c = await (await doc.getPage(p)).getTextContent();
+    c.items.forEach(i => { const x = String(i.str || '').trim(); if (x) tokens.push(x); });
+  }
+  return extraerFichas(tokens);
+}
+async function subirFichas(files){
+  let lista = [], sinLeer = [];
   $('#btnFichas').disabled = true;
   try {
-    for (let i = 0; i < lista.length; i += 300){
-      const j = await api('importarFichas', { fichas: lista.slice(i, i + 300) });
-      ag += j.agregadas; rep += j.repetidas; rech += j.rechazadas;
+    for (const file of files){
+      try {
+        if (/\.json$/i.test(file.name)){ const j = JSON.parse(await file.text()); if (Array.isArray(j)) lista = lista.concat(j); else sinLeer.push(file.name); }
+        else { const f = await leerPdf(file); if (f.length) lista = lista.concat(f); else sinLeer.push(file.name); }
+      } catch(e){ sinLeer.push(file.name); }
     }
-    toast('Fichas: ' + ag + ' nuevas' + (rep ? ', ' + rep + ' ya estaban' : '') + (rech ? ', ' + rech + ' rechazadas' : ''), rech ? 'bad' : '');
-  } catch(e){ toast(e.message + ' (nuevas hasta ahora: ' + ag + ')', 'bad'); }
-  $('#btnFichas').disabled = false; cargar();
+    if (!lista.length){ toast('No encontré fichas en ' + (sinLeer.join(', ') || 'los archivos') + '. ¿Son los PDF de WirenexFree?', 'bad'); return; }
+    const cuenta = {}, raras = {};
+    lista.forEach(f => { const k = String(f.tiempo).toLowerCase() + '|' + String(f.perfil).toUpperCase(); if (NOMBRES_FICHA[k]) cuenta[k] = (cuenta[k] || 0) + 1; else raras[k] = (raras[k] || 0) + 1; });
+    let resumen = Object.keys(cuenta).map(k => '• ' + cuenta[k] + ' de ' + NOMBRES_FICHA[k]).join('\n');
+    if (Object.keys(raras).length) resumen += '\n\nNO se cargarán (tipo no reconocido):\n' + Object.keys(raras).map(k => '• ' + raras[k] + ' de ' + k.replace('|', ' / ')).join('\n');
+    if (sinLeer.length) resumen += '\n\nNo pude leer: ' + sinLeer.join(', ');
+    if (!Object.keys(cuenta).length){ alert('Ninguna ficha es de un tipo que vendas:\n' + resumen); return; }
+    if (!confirm('Encontré ' + lista.length + ' fichas:\n\n' + resumen + '\n\n¿Las cargo al sistema?')) return;
+    let ag = 0, rep = 0, rech = 0;
+    try {
+      for (let i = 0; i < lista.length; i += 300){
+        const j = await api('importarFichas', { fichas: lista.slice(i, i + 300) });
+        ag += j.agregadas; rep += j.repetidas; rech += j.rechazadas;
+      }
+      toast('Fichas: ' + ag + ' nuevas' + (rep ? ', ' + rep + ' ya estaban' : '') + (rech ? ', ' + rech + ' rechazadas' : ''), rech ? 'bad' : '');
+    } catch(e){ toast(e.message + ' (nuevas hasta ahora: ' + ag + ')', 'bad'); }
+  } finally { $('#btnFichas').disabled = false; cargar(); }
 }
 
 // ---------- eventos ----------
@@ -458,7 +504,7 @@ $('#rTipoResta').addEventListener('click', () => setTipo('resta'));
 $('#rRapidos').addEventListener('click', e => { const b = e.target.closest('button[data-m]'); if (b) $('#rMonto').value = b.dataset.m; });
 $('#hCerrar').addEventListener('click', () => cerrar('#mHisBg'));
 $('#btnFichas').addEventListener('click', () => $('#fileFichas').click());
-$('#fileFichas').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) subirFichas(f); });
+$('#fileFichas').addEventListener('change', e => { const fs = Array.from(e.target.files || []); e.target.value = ''; if (fs.length) subirFichas(fs); });
 
 // ---------- sesión ----------
 function mensajeAuth(code){
