@@ -105,6 +105,10 @@ label{ display:block; font:600 .74rem 'Inter'; color:var(--mut); margin:12px 0 6
 .fic .cod{ font:700 .95rem ui-monospace,Menlo,Consolas,monospace; letter-spacing:.04em; }
 .fic .cod span{ color:var(--mut); font-weight:500; }
 .fic .qn{ color:var(--mut); font-size:.74rem; text-align:right; }
+.tag.nuevo{ color:var(--ok); background:rgba(52,211,153,.14); }
+.reg{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:14px; }
+.reg .k{ font-weight:700; font-size:.92rem; }
+.usr.es-nuevo{ border-color:rgba(52,211,153,.55); box-shadow:0 0 0 1px rgba(52,211,153,.18); }
 </style>
 </head>
 <body>
@@ -139,6 +143,11 @@ label{ display:block; font:600 .74rem 'Inter'; color:var(--mut); margin:12px 0 6
     <div class="chips" id="chips"></div>
     <input type="file" id="fileFichas" accept=".pdf,application/pdf,.json,application/json" multiple hidden>
     <div class="hint" style="margin-top:8px;color:var(--mut);font-size:.8rem">Cargar fichas: elige los PDF que imprime WirenexFree (puedes elegir varios a la vez).</div>
+  </div>
+
+  <div class="card reg" id="cReg">
+    <div><div class="k">Registro de clientes</div><div class="msub" id="regTxt"></div></div>
+    <button class="btn ghost xs" id="btnReg" type="button">…</button>
   </div>
 
   <div style="margin-top:14px">
@@ -272,7 +281,7 @@ function toast(msg, tipo){
   clearTimeout(toast._t); toast._t = setTimeout(() => { t.className = ''; }, 3200);
 }
 
-let auth, usuarios = [], inventario = [], cargado = false, q = '';
+let auth, usuarios = [], inventario = [], cargado = false, q = '', registroAbierto = true;
 let editCuenta = null, recCuenta = null, recTipo = 'suma', claveTexto = '';
 
 // ---------- llamadas al servidor (siempre con tu sesión) ----------
@@ -296,7 +305,7 @@ async function accion(a, d, okMsg){
 async function cargar(){
   try {
     const j = await api('listar');
-    usuarios = j.usuarios || []; inventario = j.inventario || []; cargado = true;
+    usuarios = j.usuarios || []; inventario = j.inventario || []; registroAbierto = j.registroAbierto !== false; cargado = true;
     $('#aviso').hidden = true; render();
   } catch(e){
     const a = $('#aviso'); a.hidden = false; a.textContent = '⚠️ ' + e.message;
@@ -313,21 +322,26 @@ function render(){
     const cls = i.libres === 0 ? 'cero' : i.libres <= 3 ? 'poco' : '';
     return '<button type="button" class="chip btnchip" data-t="' + esc(i.id) + '"><div class="n ' + cls + '">' + i.libres + '</div><div class="t">' + esc(i.nombre) + ' · $' + i.precio + '</div></button>';
   }).join('');
+  const nNuevos = usuarios.filter(u => u.nuevo).length;
+  $('#regTxt').textContent = (registroAbierto ? 'Abierto: los clientes pueden crear su cuenta.' : 'Cerrado: nadie puede crear cuenta.') + (nNuevos ? ' · ' + nNuevos + ' nueva' + (nNuevos === 1 ? '' : 's') + ' por revisar' : '');
+  $('#btnReg').textContent = registroAbierto ? 'Cerrar registro' : 'Abrir registro';
   const cont = $('#lista');
   if (!cargado){ return; }
   if (!usuarios.length){ cont.innerHTML = '<div class="vacio">Todavía no hay usuarios.<br>Toca ＋ para crear el primero.</div>'; return; }
   let items = usuarios.slice();
   if (q){ const nq = norm(q); items = items.filter(u => norm(u.nombre + ' ' + u.cuenta + ' ' + (u.telefono||'')).includes(nq)); }
-  items.sort((a, b) => String(a.nombre).localeCompare(String(b.nombre), 'es'));
+  items.sort((a, b) => (b.nuevo ? 1 : 0) - (a.nuevo ? 1 : 0) || String(a.nombre).localeCompare(String(b.nombre), 'es'));
   if (!items.length){ cont.innerHTML = '<div class="vacio">Nada con esa búsqueda 🔍</div>'; return; }
   cont.innerHTML = items.map(u => {
     const s = Number(u.saldo) || 0;
     const meta = [u.cuenta, u.telefono, u.notas].filter(Boolean).map(esc).join(' · ');
-    return '<div class="card usr"><div class="top"><div><div class="nom">' + esc(u.nombre) + (u.bloqueado ? '<span class="tag">BLOQUEADO</span>' : '') +
+    return '<div class="card usr' + (u.nuevo ? ' es-nuevo' : '') + '"><div class="top"><div><div class="nom">' + esc(u.nombre) + (u.nuevo ? '<span class="tag nuevo">NUEVO</span>' : '') + (u.bloqueado ? '<span class="tag">BLOQUEADO</span>' : '') +
       '</div><div class="meta">' + meta + '</div></div><div class="saldo ' + (s === 0 ? 'cero' : '') + '">' + money(s) + '</div></div>' +
       '<div class="acts"><button class="btn ok xs" data-a="rec" data-id="' + esc(u.cuenta) + '" type="button">＋ Cargar saldo</button>' +
       '<button class="btn ghost xs" data-a="his" data-id="' + esc(u.cuenta) + '" type="button">Historial</button>' +
-      '<button class="btn ghost xs" data-a="edit" data-id="' + esc(u.cuenta) + '" type="button">✎ Editar</button></div></div>';
+      '<button class="btn ghost xs" data-a="edit" data-id="' + esc(u.cuenta) + '" type="button">✎ Editar</button>' +
+      (u.nuevo ? '<button class="btn ghost xs" data-a="pw" data-id="' + esc(u.cuenta) + '" type="button">👁 Contraseña</button><button class="btn ghost xs" data-a="vis" data-id="' + esc(u.cuenta) + '" type="button">✓ Visto</button>' : '') +
+      '</div></div>';
   }).join('');
 }
 const buscarU = c => usuarios.find(u => u.cuenta === c);
@@ -532,12 +546,20 @@ $('#lista').addEventListener('click', e => {
   const b = e.target.closest('button[data-a]'); if (!b) return;
   const c = b.dataset.id;
   if (b.dataset.a === 'rec') abrirRecarga(c); else if (b.dataset.a === 'his') abrirHistorial(c); else if (b.dataset.a === 'edit') abrirUsuario(c);
+  else if (b.dataset.a === 'pw'){ editCuenta = c; verClave(); }
+  else if (b.dataset.a === 'vis'){ accion('visto', { cuenta: c }).then(j => { if (j) cargar(); }); }
 });
 $('#uCancel').addEventListener('click', () => cerrar('#mUserBg'));
 $('#uOk').addEventListener('click', guardarUsuario);
 $('#uDel').addEventListener('click', borrarUsuario);
 $('#uReset').addEventListener('click', nuevaClave);
 $('#uVer').addEventListener('click', verClave);
+$('#btnReg').addEventListener('click', async () => {
+  const abrirReg = !registroAbierto;
+  if (!confirm(abrirReg ? '¿Abrir el registro? Los clientes podrán crear su cuenta desde el portal y la app.' : '¿Cerrar el registro? Nadie podrá crear cuenta nueva hasta que lo abras otra vez.')) return;
+  const j = await accion('registroAbierto', { abierto: abrirReg }, abrirReg ? 'Registro abierto' : 'Registro cerrado');
+  if (j){ registroAbierto = abrirReg; render(); }
+});
 $('#rCancel').addEventListener('click', () => cerrar('#mRecBg'));
 $('#rOk').addEventListener('click', confirmarRecarga);
 $('#rTipoSuma').addEventListener('click', () => setTipo('suma'));

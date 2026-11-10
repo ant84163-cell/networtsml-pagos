@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1524">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="../icon-192.png">
+<link rel="apple-touch-icon" href="../icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mi saldo">
+<title>Networts ML · Mi saldo</title>
+<style>
+:root{
+  --bg:#0b1524; --card:#111e31; --card2:#0d1828; --line:rgba(148,163,184,.16);
+  --tx:#e8eef8; --mut:#8fa3bf; --acc:#38bdf8; --ok:#34d399; --warn:#fbbf24; --bad:#f87171; --badbg:rgba(248,113,113,.14);
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html,body{margin:0}
+body{ background: radial-gradient(800px 360px at 50% -100px, rgba(56,189,248,.16), transparent 70%), var(--bg);
+  color:var(--tx); font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; min-height:100vh; -webkit-tap-highlight-color:transparent; }
+body.noscroll{overflow:hidden}
+.wrap{ max-width:460px; margin:0 auto; padding:18px 16px 40px; }
+.marca{ display:flex; align-items:center; gap:10px; font-weight:800; font-size:1.05rem; }
+.marca small{ display:block; color:var(--mut); font-weight:500; font-size:.72rem; }
+.dot{ width:12px; height:12px; border-radius:50%; background:var(--acc); box-shadow:0 0 12px var(--acc); }
+.card{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px; margin-top:14px; }
+label{ display:block; font-size:.76rem; font-weight:600; color:var(--mut); margin:14px 0 6px; }
+input{ width:100%; background:var(--card2); border:1px solid var(--line); color:var(--tx); border-radius:12px; padding:13px; font-size:1rem; outline:none; }
+input:focus{ border-color:var(--acc); }
+.btn{ border:none; border-radius:13px; padding:13px 16px; font-weight:700; font-size:.95rem; cursor:pointer; color:var(--tx); background:var(--card2); border:1px solid var(--line); }
+.btn:active{ transform:scale(.98); }
+.btn.acc{ background:linear-gradient(180deg,#38bdf8,#0ea5e9); color:#04121f; border:none; }
+.btn.ok{ background:linear-gradient(180deg,#34d399,#10b981); color:#04120d; border:none; }
+.btn:disabled{ opacity:.5; cursor:not-allowed; }
+.full{ width:100%; margin-top:18px; }
+.err{ color:var(--bad); font-size:.86rem; margin-top:12px; min-height:1.1em; }
+.saldo .k{ color:var(--mut); font-size:.74rem; text-transform:uppercase; letter-spacing:.07em; }
+.saldo .v{ font-size:2.4rem; font-weight:800; color:var(--ok); margin-top:2px; }
+.saldo .n{ color:var(--mut); font-size:.85rem; }
+h2{ font-size:1rem; margin:0 0 12px; }
+.fichas{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.ficha{ background:var(--card2); border:1px solid var(--line); border-radius:14px; padding:14px 10px; text-align:center; cursor:pointer; color:var(--tx); font:inherit; }
+.ficha:active{ transform:scale(.97); }
+.ficha .t{ font-weight:700; font-size:.95rem; }
+.ficha .p{ font-weight:800; font-size:1.3rem; color:var(--acc); margin-top:4px; }
+.ficha .s{ font-size:.7rem; color:var(--mut); margin-top:2px; min-height:1em; }
+.ficha:disabled{ opacity:.45; cursor:not-allowed; }
+.mov{ display:flex; justify-content:space-between; gap:10px; padding:11px 0; border-bottom:1px solid var(--line); font-size:.88rem; }
+.mov:last-child{ border-bottom:none; }
+.mov .f{ color:var(--mut); font-size:.74rem; margin-top:2px; }
+.mov .pos{ color:var(--ok); font-weight:700; } .mov .neg{ color:var(--bad); font-weight:700; }
+.mov .cod{ font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.8rem; color:var(--acc); margin-top:3px; }
+.mov .sd{ color:var(--mut); font-size:.74rem; text-align:right; }
+.fila{ display:flex; gap:10px; margin-top:14px; }
+.fila .btn{ flex:1; }
+.vacio{ color:var(--mut); text-align:center; padding:18px 6px; font-size:.9rem; }
+.modal-bg{ position:fixed; inset:0; background:rgba(4,9,20,.75); backdrop-filter:blur(4px); z-index:50; display:flex; align-items:center; justify-content:center; padding:16px; }
+.modal{ background:var(--card); border:1px solid var(--line); width:100%; max-width:400px; border-radius:20px; padding:20px; max-height:90vh; overflow:auto; }
+.modal h3{ margin:0; font-size:1.15rem; }
+.modal .sub{ color:var(--mut); font-size:.86rem; margin-top:6px; line-height:1.4; }
+.codebox{ background:var(--card2); border:1px dashed var(--acc); border-radius:14px; padding:14px; margin-top:16px; text-align:center; }
+.codebox .k{ color:var(--mut); font-size:.72rem; text-transform:uppercase; letter-spacing:.07em; }
+.codebox .c{ font-family:ui-monospace,Menlo,Consolas,monospace; font-size:1.7rem; font-weight:800; letter-spacing:.1em; margin-top:4px; }
+.pasos{ color:var(--mut); font-size:.84rem; line-height:1.5; margin-top:14px; }
+.pasos b{ color:var(--tx); }
+#toast{ position:fixed; left:50%; bottom:28px; transform:translateX(-50%); background:#0f2238; border:1px solid var(--line); padding:11px 16px; border-radius:12px; z-index:90; font-weight:600; font-size:.88rem; opacity:0; pointer-events:none; transition:opacity .2s; max-width:92vw; text-align:center; }
+#toast.on{ opacity:1; } #toast.bad{ border-color:rgba(248,113,113,.5); color:var(--bad); }
+.link{ background:none; border:none; color:var(--mut); text-decoration:underline; font-size:.82rem; cursor:pointer; padding:8px; }
+.inst{ text-align:center; }
+.inst .t{ color:var(--mut); font-size:.85rem; margin:0 0 10px; line-height:1.4; }
+.btn.a{ display:block; text-align:center; text-decoration:none; }
+.wa{ margin-top:12px; }
+.hint2{ color:var(--mut); font-size:.8rem; line-height:1.4; margin-top:8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="marca"><span class="dot"></span><div>Networts ML<small>Mi saldo y mis fichas</small></div></div>
+
+  <!-- entrar -->
+  <div id="vLogin" class="card">
+    <h2>Entra a tu cuenta</h2>
+    <label for="cuenta">Número de cuenta</label>
+    <input id="cuenta" placeholder="Tu cuenta (ej. JUAN482)" autocapitalize="characters" autocomplete="username">
+    <label for="clave">Contraseña</label>
+    <input id="clave" type="password" autocomplete="current-password" placeholder="••••••">
+    <button id="btnEntrar" class="btn acc full" type="button">Entrar</button>
+    <div id="lerr" class="err"></div>
+    <div style="text-align:center"><button id="btnIrReg" class="link" type="button">¿No tienes cuenta? Crea la tuya</button></div>
+  </div>
+
+  <!-- crear cuenta -->
+  <div id="vRegistro" class="card" hidden>
+    <h2>Crea tu cuenta</h2>
+    <label for="rNombre">Tu nombre completo</label>
+    <input id="rNombre" autocomplete="name" maxlength="80">
+    <label for="rTel">Tu WhatsApp (opcional)</label>
+    <input id="rTel" type="tel" inputmode="numeric" autocomplete="tel" placeholder="10 números" maxlength="15">
+    <label for="rUser">Elige tu usuario</label>
+    <input id="rUser" autocapitalize="characters" autocomplete="off" placeholder="ej. JUAN482" maxlength="16">
+    <div class="hint2">De 4 a 16 letras o números, sin espacios ni símbolos. Empieza con una letra.</div>
+    <label for="rClave">Elige tu contraseña</label>
+    <input id="rClave" type="password" autocomplete="new-password" maxlength="32">
+    <label for="rClave2">Repite tu contraseña</label>
+    <input id="rClave2" type="password" autocomplete="new-password" maxlength="32">
+    <button id="btnReg" class="btn ok full" type="button">Crear mi cuenta</button>
+    <div id="rErr" class="err"></div>
+    <div style="text-align:center"><button id="btnRegVolver" class="link" type="button">Ya tengo cuenta</button></div>
+  </div>
+
+  <!-- panel -->
+  <div id="vPanel" hidden>
+    <div class="card saldo">
+      <div class="k">Tu saldo</div>
+      <div class="v" id="saldo">$0</div>
+      <div class="n" id="nombre"></div>
+    </div>
+
+    <div class="card">
+      <h2>💬 Recargar saldo</h2>
+      <div class="sub" style="color:var(--mut);font-size:.86rem;line-height:1.4">Paga a Networts ML y manda un WhatsApp al <b id="wNum"></b> con tu usuario y el monto. Te cargan el saldo y aparece aquí.</div>
+      <a id="wBtn" class="btn ok full a" href="#" target="_blank" rel="noopener">Abrir WhatsApp</a>
+    </div>
+
+    <div class="card">
+      <h2>Comprar ficha</h2>
+      <div class="fichas" id="fichas"></div>
+    </div>
+
+    <div class="card">
+      <h2>Mis movimientos</h2>
+      <div id="movs"></div>
+    </div>
+
+    <div class="fila">
+      <button id="btnClave" class="btn" type="button">Cambiar contraseña</button>
+      <button id="btnSalir" class="btn" type="button">Salir</button>
+    </div>
+  </div>
+
+  <!-- instalar app -->
+  <div id="cInst" class="card inst" hidden>
+    <h2>📲 Instala la app</h2>
+    <p class="t" id="instTxt"></p>
+    <button id="btnInst" class="btn acc full" type="button" hidden>Instalar app</button>
+  </div>
+</div>
+
+<!-- cuenta creada -->
+<div id="mReg" class="modal-bg" hidden>
+  <div class="modal">
+    <h3>¡Cuenta creada! 🎉</h3>
+    <div class="sub" id="rSub"></div>
+    <div class="codebox"><div class="k">Tu usuario</div><div class="c" id="rCuenta"></div></div>
+    <div class="pasos"><b>Para recargar saldo:</b> manda un WhatsApp al <b id="rNum"></b> con tu usuario y cuánto quieres cargar. Cuando te confirmen, tu saldo aparece aquí.</div>
+    <div class="fila">
+      <button id="rCopiar" class="btn" type="button">Copiar número</button>
+      <a id="rWa" class="btn ok a" href="#" target="_blank" rel="noopener">Abrir WhatsApp</a>
+    </div>
+    <div class="fila"><button id="rOk" class="btn acc" type="button">Listo</button></div>
+  </div>
+</div>
+
+<!-- confirmar compra -->
+<div id="mConf" class="modal-bg" hidden>
+  <div class="modal">
+    <h3 id="cTitulo">Comprar ficha</h3>
+    <div class="sub" id="cSub"></div>
+    <div class="fila">
+      <button id="cNo" class="btn" type="button">Cancelar</button>
+      <button id="cSi" class="btn ok" type="button">Comprar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ficha comprada -->
+<div id="mFicha" class="modal-bg" hidden>
+  <div class="modal">
+    <h3>¡Listo! Esta es tu ficha ✅</h3>
+    <div class="sub" id="fSub"></div>
+    <div class="codebox"><div class="k">Usuario</div><div class="c" id="fUser"></div>
+      <div class="k" style="margin-top:12px">Contraseña</div><div class="c" id="fPass"></div></div>
+    <div class="pasos"><b>Cómo usarla:</b> conéctate a la red WiFi, abre <b>login.networtsml.com</b>, escribe este usuario y contraseña y toca Conectar. Tu ficha también queda guardada en “Mis movimientos”.</div>
+    <div class="fila">
+      <button id="fCopiar" class="btn" type="button">Copiar</button>
+      <button id="fOk" class="btn acc" type="button">Listo</button>
+    </div>
+  </div>
+</div>
+
+<!-- cambiar contraseña -->
+<div id="mClave" class="modal-bg" hidden>
+  <div class="modal">
+    <h3>Cambiar contraseña</h3>
+    <label for="kNueva">Contraseña nueva (de 6 a 32 caracteres)</label>
+    <input id="kNueva" type="password" autocomplete="new-password">
+    <div id="kerr" class="err"></div>
+    <div class="fila">
+      <button id="kNo" class="btn" type="button">Cancelar</button>
+      <button id="kSi" class="btn acc" type="button">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(() => {
+'use strict';
+const API = 'https://us-central1-networtsml-pro.cloudfunctions.net/cliente';
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const money = n => (Number(n)||0).toLocaleString('es-MX',{style:'currency',currency:'MXN',minimumFractionDigits:0,maximumFractionDigits:2});
+const fechaHora = iso => { const d = new Date(iso); if (isNaN(d)) return ''; return d.toLocaleDateString('es-MX',{day:'2-digit',month:'short'}) + ' ' + d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}); };
+const abrir = id => { $(id).hidden = false; document.body.classList.add('noscroll'); };
+const cerrar = id => { $(id).hidden = true; document.body.classList.remove('noscroll'); };
+function toast(msg, tipo){ const t = $('#toast'); t.textContent = msg; t.className = 'on' + (tipo ? ' ' + tipo : ''); clearTimeout(toast._t); toast._t = setTimeout(() => { t.className = ''; }, 3200); }
+const guardar = (k, v) => { try { localStorage.setItem(k, v); } catch(_){} };
+const leer = k => { try { return localStorage.getItem(k) || ''; } catch(_){ return ''; } };
+
+let sesion = null;   // { cuenta, clave } solo en memoria
+let datos = null, pendiente = null, comprando = false, ficha = null;
+
+async function api(accion, extra){
+  let r;
+  try {
+    r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accion, cuenta: sesion.cuenta, clave: sesion.clave, ...(extra || {}) }) });
+  } catch(_){ throw new Error('Sin conexión. Revisa que estés conectado a la red de Networts ML.'); }
+  let j = {}; try { j = await r.json(); } catch(_){}
+  if (!r.ok || !j.ok) throw new Error(j.error || 'Error del servidor (' + r.status + ')');
+  return j;
+}
+
+function pintar(){
+  $('#saldo').textContent = money(datos.saldo);
+  $('#nombre').textContent = datos.nombre + ' · ' + datos.cuenta;
+  ponerWhatsapp(datos.whatsapp, datos.cuenta);
+  $('#fichas').innerHTML = datos.tipos.map(t => {
+    const sin = !t.hay, corto = datos.saldo < t.precio;
+    const nota = sin ? 'No hay por ahora' : corto ? 'Saldo insuficiente' : '';
+    return '<button class="ficha" data-t="' + esc(t.id) + '" type="button"' + (sin || corto ? ' disabled' : '') + '><div class="t">' + esc(t.nombre) +
+      '</div><div class="p">' + money(t.precio) + '</div><div class="s">' + nota + '</div></button>';
+  }).join('');
+  $('#movs').innerHTML = datos.movs.length ? datos.movs.map(m => {
+    const pos = Number(m.monto) >= 0;
+    const tit = m.tipo === 'compra' ? 'Ficha ' + esc(m.ficha) : m.tipo === 'recarga' ? 'Recarga' : 'Ajuste';
+    const cod = m.tipo === 'compra' && m.usuario ? '<div class="cod">usuario ' + esc(m.usuario) + ' · contraseña ' + esc(m.clave) + '</div>' : '';
+    return '<div class="mov"><div><div>' + tit + '</div><div class="f">' + esc(fechaHora(m.f)) + '</div>' + cod + '</div><div><div class="' + (pos ? 'pos' : 'neg') + '">' +
+      (pos ? '+' : '−') + money(Math.abs(m.monto)) + '</div><div class="sd">saldo ' + money(m.saldo) + '</div></div></div>';
+  }).join('') : '<div class="vacio">Todavía no tienes movimientos</div>';
+}
+async function refrescar(){ datos = await api('saldo'); pintar(); }
+
+async function entrar(){
+  const cuenta = $('#cuenta').value.trim(), clave = $('#clave').value;
+  if (!cuenta || !clave){ $('#lerr').textContent = 'Escribe tu cuenta y tu contraseña.'; return; }
+  $('#btnEntrar').disabled = true; $('#lerr').textContent = '';
+  sesion = { cuenta, clave };
+  try {
+    await refrescar();
+    guardar('cuenta', cuenta);
+    $('#clave').value = ''; $('#vLogin').hidden = true; $('#vPanel').hidden = false;
+  } catch(e){ sesion = null; $('#lerr').textContent = e.message; }
+  $('#btnEntrar').disabled = false;
+}
+function salir(){ sesion = null; datos = null; $('#vPanel').hidden = true; $('#vLogin').hidden = false; }
+
+// ---------- crear cuenta ----------
+const WA_DEFECTO = '232 147 8390';
+function waLink(num, cuenta){
+  const d = String(num || WA_DEFECTO).replace(/\D/g, '');
+  const txt = 'Hola, soy ' + cuenta + ' de Networts ML. Quiero recargar saldo.';
+  return 'https://wa.me/52' + d + '?text=' + encodeURIComponent(txt);
+}
+function ponerWhatsapp(num, cuenta){
+  $('#wNum').textContent = num || WA_DEFECTO;
+  $('#wBtn').href = waLink(num, cuenta);
+}
+function verRegistro(si){ $('#vRegistro').hidden = !si; $('#vLogin').hidden = si; $('#rErr').textContent = ''; }
+async function registrarse(){
+  const nombre = $('#rNombre').value.trim(), tel = $('#rTel').value.trim(), usuario = $('#rUser').value.trim().toUpperCase();
+  const clave = $('#rClave').value, clave2 = $('#rClave2').value;
+  const err = t => { $('#rErr').textContent = t; };
+  if (nombre.length < 3) return err('Escribe tu nombre completo.');
+  if (!/^[A-Z][A-Z0-9]{3,15}$/.test(usuario)) return err('El usuario debe tener de 4 a 16 letras o números, sin espacios ni símbolos, y empezar con una letra.');
+  if (clave.length < 6) return err('La contraseña debe tener al menos 6 caracteres.');
+  if (clave !== clave2) return err('Las contraseñas no son iguales.');
+  $('#btnReg').disabled = true; err('');
+  let r, j = {};
+  try {
+    r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accion: 'registrar', nombre, telefono: tel, usuario, clave }) });
+    try { j = await r.json(); } catch(_){}
+  } catch(_){ err('Sin conexión. Revisa que estés conectado a la red de Networts ML.'); $('#btnReg').disabled = false; return; }
+  if (!r.ok || !j.ok){ err(j.error || 'Error del servidor (' + r.status + ')'); $('#btnReg').disabled = false; return; }
+  guardar('cuenta', j.cuenta);
+  sesion = { cuenta: j.cuenta, clave };
+  try { await refrescar(); }
+  catch(_){ sesion = null; verRegistro(false); $('#cuenta').value = j.cuenta; toast('Cuenta creada. Entra con tu usuario y contraseña.'); $('#btnReg').disabled = false; return; }
+  ['#rNombre', '#rTel', '#rUser', '#rClave', '#rClave2'].forEach(id => { $(id).value = ''; });
+  $('#vRegistro').hidden = true; $('#vLogin').hidden = true; $('#vPanel').hidden = false;
+  $('#rSub').textContent = 'Bienvenido, ' + j.nombre + '. Tu cuenta empieza con $0.';
+  $('#rCuenta').textContent = j.cuenta; $('#rNum').textContent = j.whatsapp || WA_DEFECTO;
+  $('#rWa').href = waLink(j.whatsapp, j.cuenta);
+  abrir('#mReg'); $('#btnReg').disabled = false;
+}
+
+
+// compra: pide confirmación, manda un reqId único (si se repite el toque no se cobra doble)
+const nuevoReqId = () => { const a = new Uint8Array(12); crypto.getRandomValues(a); return Array.from(a, b => b.toString(16).padStart(2, '0')).join(''); };
+function pedirCompra(id){
+  const t = datos.tipos.find(x => x.id === id); if (!t) return;
+  pendiente = { tipo: t, reqId: nuevoReqId() };
+  $('#cTitulo').textContent = 'Comprar ' + t.nombre;
+  $('#cSub').textContent = 'Se descuentan ' + money(t.precio) + ' de tu saldo (' + money(datos.saldo) + '). Te quedan ' + money(datos.saldo - t.precio) + '.';
+  abrir('#mConf');
+}
+async function confirmarCompra(){
+  if (comprando || !pendiente) return;
+  comprando = true; $('#cSi').disabled = true;
+  try {
+    const j = await api('comprar', { tipo: pendiente.tipo.id, reqId: pendiente.reqId });
+    cerrar('#mConf');
+    ficha = j;
+    $('#fSub').textContent = j.nombre + ' · ' + money(j.precio) + ' · te quedan ' + money(j.saldo);
+    $('#fUser').textContent = j.usuario; $('#fPass').textContent = j.clave;
+    abrir('#mFicha');
+    refrescar().catch(() => {});
+  } catch(e){ cerrar('#mConf'); toast(e.message, 'bad'); refrescar().catch(() => {}); }
+  comprando = false; $('#cSi').disabled = false; pendiente = null;
+}
+
+async function cambiarClave(){
+  const nueva = $('#kNueva').value;
+  if (nueva.length < 6 || nueva.length > 32){ $('#kerr').textContent = 'Debe tener de 6 a 32 caracteres.'; return; }
+  $('#kSi').disabled = true; $('#kerr').textContent = '';
+  try { await api('cambiarClave', { nueva }); sesion.clave = nueva; cerrar('#mClave'); toast('Contraseña cambiada ✓'); }
+  catch(e){ $('#kerr').textContent = e.message; }
+  $('#kSi').disabled = false;
+}
+
+$('#btnEntrar').addEventListener('click', entrar);
+$('#clave').addEventListener('keydown', e => { if (e.key === 'Enter') entrar(); });
+$('#btnSalir').addEventListener('click', salir);
+$('#fichas').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (b && !b.disabled) pedirCompra(b.dataset.t); });
+$('#cNo').addEventListener('click', () => { cerrar('#mConf'); pendiente = null; });
+$('#cSi').addEventListener('click', confirmarCompra);
+$('#fOk').addEventListener('click', () => cerrar('#mFicha'));
+$('#fCopiar').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText('Usuario: ' + ficha.usuario + '\nContraseña: ' + ficha.clave); toast('Copiado ✓'); }
+  catch(_){ toast('No se pudo copiar, anótalos', 'bad'); }
+});
+$('#btnClave').addEventListener('click', () => { $('#kNueva').value = ''; $('#kerr').textContent = ''; abrir('#mClave'); });
+$('#kNo').addEventListener('click', () => cerrar('#mClave'));
+$('#kSi').addEventListener('click', cambiarClave);
+$('#btnIrReg').addEventListener('click', () => verRegistro(true));
+$('#btnRegVolver').addEventListener('click', () => verRegistro(false));
+$('#btnReg').addEventListener('click', registrarse);
+$('#rClave2').addEventListener('keydown', e => { if (e.key === 'Enter') registrarse(); });
+$('#rOk').addEventListener('click', () => cerrar('#mReg'));
+$('#rCopiar').addEventListener('click', async () => { try { await navigator.clipboard.writeText($('#rNum').textContent); toast('Número copiado ✓'); } catch(_){ toast('No se pudo copiar', 'bad'); } });
+ponerWhatsapp(WA_DEFECTO, '');
+$('#cuenta').value = leer('cuenta');
+})();
+</script>
+<script>
+// Instalar como app + funcionar sin abrir el navegador
+(function () {
+  'use strict';
+  var dip = null;
+  var q = function (s) { return document.querySelector(s); };
+  var standalone = function () { return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; };
+  var ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  function mostrar() {
+    if (standalone()) { q('#cInst').hidden = true; return; }
+    q('#cInst').hidden = false;
+    q('#btnInst').hidden = !dip;
+    q('#instTxt').textContent = dip ? 'Instálala en tu celular para entrar más rápido, como cualquier app.'
+      : ios ? 'En iPhone: toca el botón Compartir y luego "Añadir a pantalla de inicio".'
+      : 'Abre el menú ⋮ del navegador y toca "Instalar app" o "Añadir a pantalla de inicio".';
+  }
+  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); dip = e; mostrar(); });
+  window.addEventListener('appinstalled', function () { dip = null; q('#cInst').hidden = true; });
+  q('#btnInst').addEventListener('click', function () {
+    if (!dip) return;
+    dip.prompt();
+    dip.userChoice.then(function () { dip = null; mostrar(); }, function () {});
+  });
+  mostrar();
+  if ('serviceWorker' in navigator) { window.addEventListener('load', function () { try { navigator.serviceWorker.register('sw.js'); } catch (e) {} }); }
+})();
+</script>
+</body>
+</html>
